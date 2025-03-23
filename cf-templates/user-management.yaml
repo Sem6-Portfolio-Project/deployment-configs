@@ -6,6 +6,9 @@ Parameters:
   LambdaCodeKey:
     Type: String
     Description: S3 key of the Lambda deployment package
+  AppConsoleUrl:
+    Type: String
+    Description: Console url
 Outputs:
   UserPoolId:
     Description: User pool ID
@@ -136,4 +139,22 @@ Resources:
                 - !Sub
                     - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
                     - PoolId: !Ref UserPool
-
+  AuthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: AuthLambda
+      Description: This lambda will invoke defined in lib/lambda/auth.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/api/auth.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          COGNITO_USER_POOL_ID: !Ref UserPool
+          COGNITO_APP_CLIENT_ID: !Ref UserPoolClient
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
