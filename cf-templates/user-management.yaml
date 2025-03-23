@@ -1,20 +1,23 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This template will create cognito User pool, Related lambda function and IAM roles.
+Description: This template will create cognito User pool, User groups, Related lambda function and IAM roles.
 Parameters:
-  LambdaCodeS3Url:
+  ResourceBucket:
     Type: String
+  LambdaCodeKey:
+    Type: String
+    Description: S3 key of the Lambda deployment package
 Outputs:
   UserPoolId:
     Description: User pool ID
-    Value: !ref UserPool
+    Value: !Ref UserPool
   UserPoolClientID:
     Description: User pool client ID
-    Value: !ref UserPoolClient
+    Value: !Ref UserPoolClient
 Resources:
   UserPool:
-    Type: 'AWS::Cognito::UserPool'
+    Type: AWS::Cognito::UserPool
     Properties:
-      MfaConfiguration: 'NO'
+      MfaConfiguration: 'OFF'
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -41,8 +44,7 @@ Resources:
       VerificationMessageTemplate:
         DefaultEmailOption: CONFIRM_WITH_CODE
   UserPoolClient:
-    Type: 'AWS::Cognito::UserPoolClient'
-    DependsOn: UserPool
+    Type: AWS::Cognito::UserPoolClient
     Properties:
       ClientName: UserPoolClient
       AccessTokenValidity: 30
@@ -53,7 +55,7 @@ Resources:
         AccessToken: 'days'
         IdToken: 'days'
         RefreshToken: 'days'
-      UserPoolId: !ref UserPool
+      UserPoolId: !Ref UserPool
       ExplicitAuthFlows:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
         - ALLOW_CUSTOM_AUTH
@@ -69,34 +71,69 @@ Resources:
         - Facebook
         - Google
   AdminGroup:
-    Type: 'AWS::Cognito::UserPoolGroup'
-    DependsOn: UserPool
+    Type: AWS::Cognito::UserPoolGroup
     Properties:
       Description: This group for handling the admin users
       GroupName: AdminGroup
       Precedence: 1
-      UserPoolId: !ref UserPool
+      UserPoolId: !Ref UserPool
   BusGroup:
-    Type: 'AWS::Cognito::UserPoolGroup'
-    DependsOn: UserPool
+    Type: AWS::Cognito::UserPoolGroup
     Properties:
       Description: This group for handling the Bus owners
       GroupName: BusGroup
       Precedence: 2
-      UserPoolId: !ref UserPool
+      UserPoolId: !Ref UserPool
   PassengerGroup:
-    Type: 'AWS::Cognito::UserPoolGroup'
-    DependsOn: UserPool
+    Type: AWS::Cognito::UserPoolGroup
     Properties:
       Description: This group for handling the passengers
       GroupName: PassengerGroup
       Precedence: 3
-      UserPoolId: !ref UserPool
+      UserPoolId: !Ref UserPool
   DisabledGroup:
-    Type: 'AWS::Cognito::UserPoolGroup'
-    DependsOn: UserPool
+    Type: AWS::Cognito::UserPoolGroup
     Properties:
       Description: This group for handling the disabled users
       GroupName: DisabledGroup
       Precedence: 4
-      UserPoolId: !ref UserPool
+      UserPoolId: !Ref UserPool
+  AuthLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuthLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on cognito.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        PolicyName: CognitoAccess
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Sid: CognitoAccess
+              Effect: Allow
+              Action:
+                - cognito-idp:SignUp
+                - cognito-idp:ConfirmSignUp
+                - cognito-idp:ResendConfirmationCode
+                - cognito-idp:InitiateAuth
+                - cognito-idp:RespondToAuthChallenge
+                - cognito-idp:ForgotPassword
+                - cognito-idp:ConfirmForgotPassword
+                - cognito-idp:ChangePassword
+                - cognito-idp:AdminAddUserToGroup
+                - cognito-idp:AdminGetUser
+              Resource:
+                - !Sub
+                    - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
+                    - PoolId: !Ref UserPool
+
