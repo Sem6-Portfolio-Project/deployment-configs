@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template will create cognito User pool, Related lambda function and IAM roles.
+Parameters:
+  LambdaCodeS3Url:
+    Type: String
+Outputs:
+  UserPoolId:
+    Description: User pool ID
+    Value: !ref UserPool
+  UserPoolClientID:
+    Description: User pool client ID
+    Value: !ref UserPoolClient
+Resources:
+  UserPool:
+    Type: 'AWS::Cognito::UserPool'
+    Properties:
+      MfaConfiguration: 'NO'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          PasswordHistorySize: 5
+          RequireLowercase: 'true'
+          RequireNumbers: 'true'
+          RequireSymbols: 'true'
+          RequireUppercase: 'true'
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: 'false'
+          Mutable: 'true'
+          Name: email
+          Required: 'true'
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: 'false'
+          Mutable: 'true'
+          Name: role
+          Required: 'true'
+      UserPoolAddOns:
+        AdvancedSecurityMode: 'OFF'
+      UserPoolName: MobileApp
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+  UserPoolClient:
+    Type: 'AWS::Cognito::UserPoolClient'
+    DependsOn: UserPool
+    Properties:
+      ClientName: UserPoolClient
+      AccessTokenValidity: 30
+      AuthSessionValidity: 5
+      IdTokenValidity: 5
+      RefreshTokenValidity: 5
+      TokenValidityUnits:
+        AccessToken: 'days'
+        IdToken: 'days'
+        RefreshToken: 'days'
+      UserPoolId: !ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_CUSTOM_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: 'false'
+      PreventUserExistenceErrors: LEGACY
+      ReadAttributes:
+        - email
+        - 'custom:role'
+      SupportedIdentityProviders:
+        - COGNITO
+        - Facebook
+        - Google
+  AdminGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    DependsOn: UserPool
+    Properties:
+      Description: This group for handling the admin users
+      GroupName: AdminGroup
+      Precedence: 1
+      UserPoolId: !ref UserPool
+  BusGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    DependsOn: UserPool
+    Properties:
+      Description: This group for handling the Bus owners
+      GroupName: BusGroup
+      Precedence: 2
+      UserPoolId: !ref UserPool
+  PassengerGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    DependsOn: UserPool
+    Properties:
+      Description: This group for handling the passengers
+      GroupName: PassengerGroup
+      Precedence: 3
+      UserPoolId: !ref UserPool
+  DisabledGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    DependsOn: UserPool
+    Properties:
+      Description: This group for handling the disabled users
+      GroupName: DisabledGroup
+      Precedence: 4
+      UserPoolId: !ref UserPool
