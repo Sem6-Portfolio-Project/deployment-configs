@@ -1,8 +1,13 @@
 #!/bin/bash
 
+source "./utils.sh"
+
 # This is distribution destination
 DIST="$AUTH_BACKEND/dist"
+ZIP_FILE_NAME_BACKEND='build_backend_auth'
+S3_DIR_LAMBDA_CODE="$S3_LAMBDA_COMMON_PATH/backend-auth"
 
+# This will build the project and create zip file contains the source code
 build_backend_auth_zip() {
     set -e
 
@@ -31,3 +36,34 @@ build_backend_auth_zip() {
     cd -
     set +e
 }
+
+# Synchronize specific file from local source directory to s3 bucket.
+# params
+#   $1 - The local source directory.
+#   $2 - The name of the file to upload.
+#   $3 - The destination directory in the S3 bucket.
+s3_sync() {
+  source_dir=$1
+  source_key=$2
+  dest_dir=$3
+
+  if [[ -z "$source_dir" || -z "$source_key" || -z "$dest_dir" ]]; then
+    echo_error -u "Error: Missing arguments"
+    echo_error "Usage: s3_sync <source_dir> <source_key> <des_dir>"
+    exit 1
+  fi
+
+  echo "Uploading $source_key to S3 bucket $dest_dir"
+  aws s3 sync --profile "$AWS_PROFILE" \
+    "$source_dir" "s3://$RESOURCE_BUCKET_NAME/$dest_dir" \
+    --exclude="*" --include="$source_key"
+
+  aws s3 ls s3://$RESOURCE_BUCKET_NAME/ --recursive --human-readable --summarize --profile "$AWS_PROFILE"
+}
+# This will upload build zip file to the S3 bucket.
+upload_build_project_to_s3() {
+  s3_sync "$DIST" "$ZIP_FILE_NAME_BACKEND.zip" "$S3_DIR_LAMBDA_CODE"
+}
+
+build_backend_auth_zip
+upload_build_project_to_s3
