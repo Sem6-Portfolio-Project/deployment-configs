@@ -36,11 +36,11 @@ Resources:
           Mutable: 'true'
           Name: email
           Required: 'true'
-        - AttributeDataType: String
-          DeveloperOnlyAttribute: 'false'
-          Mutable: 'true'
-          Name: role
-          Required: 'true'
+#        - AttributeDataType: String
+#          DeveloperOnlyAttribute: 'false'
+#          Mutable: 'true'
+#          Name: role
+#          Required: 'true'
       UserPoolAddOns:
         AdvancedSecurityMode: 'OFF'
       UserPoolName: MobileApp
@@ -50,13 +50,13 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       ClientName: UserPoolClient
-      AccessTokenValidity: 30
+      AccessTokenValidity: 24
       AuthSessionValidity: 5
-      IdTokenValidity: 5
+      IdTokenValidity: 24
       RefreshTokenValidity: 5
       TokenValidityUnits:
-        AccessToken: 'days'
-        IdToken: 'days'
+        AccessToken: 'hours'
+        IdToken: 'hours'
         RefreshToken: 'days'
       UserPoolId: !Ref UserPool
       ExplicitAuthFlows:
@@ -68,11 +68,11 @@ Resources:
       PreventUserExistenceErrors: LEGACY
       ReadAttributes:
         - email
-        - 'custom:role'
+#        - 'custom:role'
       SupportedIdentityProviders:
         - COGNITO
-        - Facebook
-        - Google
+#        - Facebook
+#        - Google
   AdminGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
@@ -118,27 +118,27 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        PolicyName: CognitoAccess
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Sid: CognitoAccess
-              Effect: Allow
-              Action:
-                - cognito-idp:SignUp
-                - cognito-idp:ConfirmSignUp
-                - cognito-idp:ResendConfirmationCode
-                - cognito-idp:InitiateAuth
-                - cognito-idp:RespondToAuthChallenge
-                - cognito-idp:ForgotPassword
-                - cognito-idp:ConfirmForgotPassword
-                - cognito-idp:ChangePassword
-                - cognito-idp:AdminAddUserToGroup
-                - cognito-idp:AdminGetUser
-              Resource:
-                - !Sub
-                    - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
-                    - PoolId: !Ref UserPool
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: CognitoAccess
+                Effect: Allow
+                Action:
+                  - cognito-idp:SignUp
+                  - cognito-idp:ConfirmSignUp
+                  - cognito-idp:ResendConfirmationCode
+                  - cognito-idp:InitiateAuth
+                  - cognito-idp:RespondToAuthChallenge
+                  - cognito-idp:ForgotPassword
+                  - cognito-idp:ConfirmForgotPassword
+                  - cognito-idp:ChangePassword
+                  - cognito-idp:AdminAddUserToGroup
+                  - cognito-idp:AdminGetUser
+                Resource:
+                  - !Sub
+                      - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
+                      - PoolId: !Ref UserPool
   AuthLambda:
     Type: AWS::Lambda::Function
     Properties:
