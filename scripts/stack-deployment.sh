@@ -49,6 +49,7 @@ stack_params() {
   declare -A params_map
   params_map["ResourceBucket"]="$RESOURCE_BUCKET_NAME"
   params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-auth/build_backend_auth.zip"
+  params_map["NodeLayerCodeKey"]="$S3_LAYERS_COMMON_PATH/lambda_node_layer.zip"
   params_map["AppConsoleUrl"]="$ConsoleUrl"
 
   # Prepare parameters for CloudFormation

@@ -6,6 +6,9 @@ Parameters:
   LambdaCodeKey:
     Type: String
     Description: S3 key of the Lambda deployment package
+  NodeLayerCodeKey:
+    Type: String
+    Description: S3 key for the lambda node layer
   AppConsoleUrl:
     Type: String
     Description: Console url
@@ -36,11 +39,11 @@ Resources:
           Mutable: 'true'
           Name: email
           Required: 'true'
-#        - AttributeDataType: String
-#          DeveloperOnlyAttribute: 'false'
-#          Mutable: 'true'
-#          Name: role
-#          Required: 'true'
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: 'false'
+          Mutable: 'true'
+          Name: role
+          Required: 'false'
       UserPoolAddOns:
         AdvancedSecurityMode: 'OFF'
       UserPoolName: MobileApp
@@ -53,7 +56,7 @@ Resources:
       AccessTokenValidity: 24
       AuthSessionValidity: 5
       IdTokenValidity: 24
-      RefreshTokenValidity: 5
+      RefreshTokenValidity: 30
       TokenValidityUnits:
         AccessToken: 'hours'
         IdToken: 'hours'
@@ -61,6 +64,7 @@ Resources:
       UserPoolId: !Ref UserPool
       ExplicitAuthFlows:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_CUSTOM_AUTH
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
@@ -68,11 +72,14 @@ Resources:
       PreventUserExistenceErrors: LEGACY
       ReadAttributes:
         - email
-#        - 'custom:role'
+        - 'custom:role'
       SupportedIdentityProviders:
         - COGNITO
 #        - Facebook
 #        - Google
+      WriteAttributes:
+        - email
+        - 'custom:role'
   AdminGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
@@ -139,6 +146,14 @@ Resources:
                   - !Sub
                       - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
                       - PoolId: !Ref UserPool
+  NodeLayer:
+    Type: AWS::Lambda::LayerVersion
+    Description: This is for the node module layer
+    Properties:
+      LayerName: NodeModuleLayer
+      Content:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref NodeLayerCodeKey
   AuthLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -146,15 +161,19 @@ Resources:
       Description: This lambda will invoke defined in lib/lambda/auth.js.
       Code:
         S3Bucket: !Ref ResourceBucket
-        S3Key: !Ref LambdaCodeKey
+        S3Key: !Ref NodeLayerCodeKey
       MemorySize: 1024
       Handler: lib/lambda/api/auth.handler
       Timeout: 60
       Runtime: nodejs22.x
       Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayer
       Environment:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           COGNITO_USER_POOL_ID: !Ref UserPool
           COGNITO_APP_CLIENT_ID: !Ref UserPoolClient
           APP_CONSOLE_URL: !Ref AppConsoleUrl
+
+# TODO: ADD THE EMAIL VERIFICATION FOR THIS.

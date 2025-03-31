@@ -4,9 +4,9 @@
 export CUR_DIR=$(pwd)
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-  NULL_DEVICE="NUL"
+  export NULL_DEVICE="NUL"
 else
-  NULL_DEVICE="/dev/null"
+  export NULL_DEVICE="/dev/null"
 fi
 
 #This will give project root. (/../..) change accordingly based on the project setup
@@ -14,6 +14,7 @@ export PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null &&
 
 #Project directories
 export AUTH_BACKEND="$PROJECT_ROOT/mobile-app-backend-auth"
+export LAYERS_DIR="$PROJECT_ROOT/layers"
 
 #Template directories
 export TEMPLATE_DIR="$PROJECT_ROOT/deployment-configs/cf-templates"
@@ -26,6 +27,7 @@ export S3_DOMAIN_URL="https://s3.$AWS_REGION.amazonaws.com"
 export RESOURCE_BUCKET_NAME="481665090781-mobile-app-resources"
 export S3_LAMBDA_COMMON_PATH="source-code/lambdas"
 export S3_TEMPLATES_COMMON_PATH="deployment-configs/templates"
+export S3_LAYERS_COMMON_PATH="layers"
 
 
 #params

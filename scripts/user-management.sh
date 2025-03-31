@@ -32,8 +32,9 @@ build_backend_auth_zip() {
 
     cd -
 
-    cd "$DIST" && zip -9vr "$ZIP_FILE_NAME_BACKEND" \
+    cd "$DIST" && zip -9vr "$ZIP_FILE_NAME_BACKEND"\
       lib/ ../package.json ../package-lock.json BUILD
+
 
     cd -
     set +e
@@ -62,7 +63,7 @@ s3_sync() {
   echo "Uploading $source_key to S3 bucket $dest_dir"
   aws s3 sync --profile "$AWS_PROFILE" \
     "$source_dir" "s3://$RESOURCE_BUCKET_NAME/$dest_dir" \
-    --exclude="*" --include="$source_key"
+    --exclude="*" --include="$source_key" || echo_error "Error while uploading $source_key."
 
 #  aws s3 ls s3://$RESOURCE_BUCKET_NAME/ --recursive --human-readable --summarize --profile "$AWS_PROFILE"
 }
@@ -98,8 +99,8 @@ validate_cf_template() {
     exit 1
   fi
 }
-
+#
 #build_backend_auth_zip
 #upload_build_project_to_s3
-upload_cf_template
-validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_PATH/$TEMPLATE_NAME"
+#upload_cf_template
+#validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_PATH/$TEMPLATE_NAME"
