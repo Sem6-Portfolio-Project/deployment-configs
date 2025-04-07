@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create the dynamodb tables,... for the bus related services.
+Outputs:
+  VehicleStateLogsARN:
+    Description: ARN of vehicle state logs table.
+    Value: !GetAtt VehicleStateLogs.Arn
+  BusesARN:
+    Description: ARN of registered buses table.
+    Value: !GetAtt Buses.Arn
+  WebSocketConnBusesARN:
+    Description: ARN of bus's websocket connection table.
+    Value: !GetAtt WebSocketConnBuses.Arn
+  WebSocketConnPassengersARN:
+    Description: ARN of passengers's websocket connection table.
+    Value: !GetAtt WebSocketConnPassengers.Arn
+Resources:
+  Buses:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Buses
+      AttributeDefinitions:
+        - AttributeName: bus_no
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: bus_no
+          KeyType: HASH
+  VehicleStateLogs:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VehicleStateLogs
+      AttributeDefinitions:
+        - AttributeName: bus_no
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: bus_no
+          KeyType: HASH
+  WebSocketConnBuses:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnBuses
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: connection_id
+          KeyType: HASH
+  WebSocketConnPassengers:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnPassengers
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: connection_id
+          KeyType: HASH
