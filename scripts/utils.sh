@@ -30,7 +30,7 @@ build_backend_and_create_zip() {
 
     set -e
 
-    echo "Building auth backend ZIP..."
+    echo "Building backend ZIP..."
 
     mkdir -p "$dist/"
     rm -rf "$dist"

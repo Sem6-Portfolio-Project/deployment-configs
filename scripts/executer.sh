@@ -60,7 +60,34 @@ runner() {
       PARAMS=$(stack_params_for_bus_management)
       deploy_cf_stack "bus-management" "bus-management.yaml" "$PARAMS"
     fi
+  elif [[ "$user_input" = 2 ]]; then
+    echo "UPDATE OPTIONS"
+    echo "1.Update User-management lambdas"
+    echo "2.Update Bus-management lambdas"
+    echo "3.All lambdas"
 
+    echo -n "Please enter option : "
+    read input
+
+    if [[ -z "$input" ]] ;then
+      error_and_exit "Missing selected option.."
+    fi
+
+    echo "Selected option id : $input"
+
+    if [[ "$input" = 1 ]] ;then
+      echo "Updating user management lambdas..."
+      update_auth_lambda
+    elif [[ "$input" = 2 ]] ;then
+      echo "Updating bus management lambdas..."
+      update_bus_lambda
+    elif [[ "$input" = 3 ]]; then
+      echo "Updating user management lambdas..."
+      update_auth_lambda
+
+      echo "Updating bus management lambdas..."
+      update_bus_lambda
+    fi
   fi
 }
 
