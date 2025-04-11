@@ -1,7 +1,7 @@
 #!/bin/bash
 
+source './params.sh'
 source './utils.sh'
-source './user-management.sh'
 
 DIST="$LAYERS_DIR/node-module"
 
@@ -40,6 +40,3 @@ update_lambda_layer() {
     --region $AWS_REGION
 
 }
-create_layer_zip "lambda_node_layer"
-upload_lambda_layer_to_s3 "lambda_node_layer"
-update_lambda_layer

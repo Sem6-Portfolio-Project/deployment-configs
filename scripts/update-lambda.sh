@@ -1,7 +1,7 @@
 
 
+source './params.sh'
 source './utils.sh'
-source './user-management.sh'
 
 # This will update the lambda function
 update_lambda_code() {

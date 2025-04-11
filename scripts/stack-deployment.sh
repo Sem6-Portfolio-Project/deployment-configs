@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "./utils.sh"
+source './params.sh'
 
 #This will deploy the cf stack
 deploy_cf_stack() {
@@ -31,6 +31,19 @@ deploy_cf_stack() {
       --stack-name "$stack_name"  || error_and_exit "Error while deploying the $template_name stack"
 
   echo_success "Successfully deployed the $template_name stack."
+
+  echo "Fetching stack outputs..."
+  stack_outputs=$(aws cloudformation describe-stacks \
+      --profile "$AWS_PROFILE" \
+      --region "$AWS_REGION" \
+      --stack-name "$stack_name" \
+      --query "Stacks[0].Outputs" \
+      --output json)
+
+  # Loop through each output and write it dynamically to ./params.sh
+  echo "$stack_outputs" | jq -r '.[] | "export \(.OutputKey)=\"\(.OutputValue)\""' >> ./params.sh
+
+  echo "Stack outputs have been written to ./params.sh"
 }
 
 #This will create stack changes set.
@@ -44,12 +57,29 @@ update_changes_set() {
   set -e
 }
 
-stack_params() {
+# This will create the common stack params.
+stack_params_for_common_resources() {
+
+  declare -A params_map
+  params_map["ResourceBucket"]="$RESOURCE_BUCKET_NAME"
+  params_map["NodeLayerCodeKey"]="$S3_LAYERS_COMMON_PATH/lambda_node_layer.zip"
+
+  # Prepare parameters for CloudFormation
+  param_string=""
+  for key in "${!params_map[@]}"; do
+    param_string+="ParameterKey=$key,ParameterValue=${params_map[$key]} "
+  done
+
+  echo "$param_string"
+}
+
+# This will create the stack params for the user management.
+stack_params_for_user_management() {
 
   declare -A params_map
   params_map["ResourceBucket"]="$RESOURCE_BUCKET_NAME"
   params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-auth/build_backend_auth.zip"
-  params_map["NodeLayerCodeKey"]="$S3_LAYERS_COMMON_PATH/lambda_node_layer.zip"
+  params_map["NodeLayerARN"]="$NodeLayerARN"
   params_map["AppConsoleUrl"]="$ConsoleUrl"
 
   # Prepare parameters for CloudFormation
@@ -61,5 +91,23 @@ stack_params() {
   echo "$param_string"
 }
 
-PARAMS=$(stack_params)
-deploy_cf_stack "user-management" "user-management.yaml" "$PARAMS"
+# This will create the stack params for the bus management.
+stack_params_for_bus_management() {
+
+  declare -A params_map
+  params_map["ResourceBucket"]="$RESOURCE_BUCKET_NAME"
+  params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-bus/build_backend_bus_management.zip"
+  params_map["NodeLayerARN"]="$NodeLayerARN"
+  params_map["AppConsoleUrl"]="$ConsoleUrl"
+
+  # Prepare parameters for CloudFormation
+  param_string=""
+  for key in "${!params_map[@]}"; do
+    param_string+="ParameterKey=$key,ParameterValue=${params_map[$key]} "
+  done
+
+  echo "$param_string"
+}
+
+#PARAMS=$(stack_params_for_user_management)
+#deploy_cf_stack "user-management" "user-management.yaml" "$PARAMS"

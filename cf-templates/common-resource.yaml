@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create the common resources lambda node layer.
+Parameters:
+  ResourceBucket:
+    Type: String
+  NodeLayerCodeKey:
+    Type: String
+    Description: S3 key for the lambda node layer
+Outputs:
+  NodeLayerARN:
+    Description: ARN of the node layer
+    Value: !Ref NodeLayer
+Resources:
+  NodeLayer:
+    Type: AWS::Lambda::LayerVersion
+    Description: This is for the node module layer
+    Properties:
+      LayerName: NodeModuleLayer
+      Content:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref NodeLayerCodeKey

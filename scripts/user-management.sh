@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source "./utils.sh"
+source './params.sh'
+source './utils.sh'
 
 # This is distribution destination
 DIST="$AUTH_BACKEND/dist"

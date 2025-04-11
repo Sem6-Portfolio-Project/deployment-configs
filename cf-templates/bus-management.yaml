@@ -1,5 +1,17 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: This will create the dynamodb tables,... for the bus related services.
+Description: This will create the dynamodb tables,lambda functions for the bus services.
+Parameters:
+  ResourceBucket:
+    Type: String
+  LambdaCodeKey:
+    Type: String
+    Description: S3 key of the Lambda deployment package
+  NodeLayerARN:
+    Type: String
+    Description: ARN of the node module layer
+  AppConsoleUrl:
+    Type: String
+    Description: Console url
 Outputs:
   VehicleStateLogsARN:
     Description: ARN of vehicle state logs table.
@@ -58,3 +70,59 @@ Resources:
       KeySchema:
         - AttributeName: connection_id
           KeyType: HASH
+  BusLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BusLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on dynamodb.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt Buses.Arn
+  BusLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BusLambda
+      Description: This lambda will invoke defined in lib/lambda/bus.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/api/bus.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt BusLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
