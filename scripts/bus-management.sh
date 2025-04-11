@@ -13,7 +13,7 @@ TEMPLATE_NAME="bus-management.yaml"
 build_and_upload_bus_manage_backend_code() {
   echo "Building the bus management backend code..."
   # Build the bus management backend and create the zip folder
-  build_backend_and_create_zip "$DIST" "$AUTH_BACKEND" "$ZIP_FILE_NAME_BACKEND"
+  build_backend_and_create_zip "$DIST" "$BUS_MANAGE_BACKEND" "$ZIP_FILE_NAME_BACKEND"
 
   echo "Uploading the bus management backend code..."
   # Upload build zip file to the S3 bucket.
