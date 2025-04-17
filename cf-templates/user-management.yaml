@@ -150,7 +150,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: AuthLambda
-      Description: This lambda will invoke defined in lib/lambda/auth.js.
+      Description: This lambda will invoke defined in lib/lambda/api/auth.js.
       Code:
         S3Bucket: !Ref ResourceBucket
         S3Key: !Ref LambdaCodeKey

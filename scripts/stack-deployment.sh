@@ -41,7 +41,20 @@ deploy_cf_stack() {
       --output json)
 
   # Loop through each output and write it dynamically to ./params.sh
-  echo "$stack_outputs" | jq -r '.[] | "export \(.OutputKey)=\"\(.OutputValue)\""' >> ./params.sh
+  echo "$stack_outputs" | jq -r '.[] | "export \(.OutputKey)=\"\(.OutputValue)\""' | while read line; do
+    # Extract the environment variable name (before the "=" sign)
+    var_name=$(echo "$line" | cut -d'=' -f1)
+
+    # Check if the variable exists in params.sh
+    if grep -q "^$var_name=" ./params.sh; then
+      # If the variable exists, replace it with the new value using sed
+      sed -i "/^$var_name=/c\\$line" ./params.sh
+    else
+      # If the variable doesn't exist, append it
+      echo "$line" >> ./params.sh
+    fi
+  done
+
 
   echo "Stack outputs have been written to ./params.sh"
 }

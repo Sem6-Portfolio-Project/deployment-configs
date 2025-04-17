@@ -111,7 +111,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: BusLambda
-      Description: This lambda will invoke defined in lib/lambda/bus.js.
+      Description: This lambda will invoke defined in lib/lambda/api/bus.js.
       Code:
         S3Bucket: !Ref ResourceBucket
         S3Key: !Ref LambdaCodeKey

@@ -32,9 +32,9 @@ export S3_LAYERS_COMMON_PATH="layers"
 #params
 export ConsoleUrl="www.google.com"
 
-export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:12"
-export UserPoolClientID="3f3acasnkcloh5j5hbseb6gk5k"
-export UserPoolId="us-east-1_BKbjzNOwY"
+export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:15"
+export UserPoolClientID="3a2huj1a3jaib4tj4jchv2gl1k"
+export UserPoolId="us-east-1_dOtbRZYEL"
 export VehicleStateLogsARN="arn:aws:dynamodb:us-east-1:481665090781:table/VehicleStateLogs"
 export WebSocketConnBusesARN="arn:aws:dynamodb:us-east-1:481665090781:table/WebSocketConnBuses"
 export BusesARN="arn:aws:dynamodb:us-east-1:481665090781:table/Buses"
