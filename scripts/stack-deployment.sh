@@ -113,6 +113,10 @@ stack_params_for_bus_management() {
   params_map["NodeLayerARN"]="$NodeLayerARN"
   params_map["AppConsoleUrl"]="$ConsoleUrl"
 
+  #TODO: need to add WSEndpointUrl and WebsocketId
+  params_map["WSEndpointUrl"]=""
+  params_map["WebsocketId"]=""
+
   # Prepare parameters for CloudFormation
   param_string=""
   for key in "${!params_map[@]}"; do
