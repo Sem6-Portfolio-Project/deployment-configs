@@ -1,5 +1,61 @@
-
-# TODO: need to create the api gateway (apis + websocket apis)
-
-
-# TODO: need to create the lambda execution roles for this api gateway
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create Websocket API + Rest APIs
+Parameters:
+  Stage:
+    Type: String
+    Description: This is the deployed stage
+Outputs:
+  WSEndpointUrl:
+    Value: !Sub "https://${Websocket}.execute-api.${AWS::Region}.amazonaws.com/${Stage}"
+    Description: This this websocket end point url ( this is used to send message to the ws by the server )
+  WebsocketId:
+    Value: !Ref Websocket
+    Description: This is websocket id
+  AuthProxyID:
+    Value: !Ref AuthProxy
+    Description: This is a resource id of AuthProxy
+  BusProxyID:
+    Value: !Ref AuthProxy
+    Description: This is a resource id of AuthProxy
+  RestApiID:
+    Value: !Ref BusTrackingSys
+    Description: This is rest api id
+Resources:
+  Websocket:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Websocket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.action
+  BusTrackingSys:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: BusTrackingSys
+      Description: This is handle the all api end ponts which needed for busTracking system.
+      EndpointConfiguration:
+        Types:
+          - EDGE
+  Auth:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'auth'
+  Bus:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'bus'
+  AuthProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref Auth
+      PathPart: '{proxy+}'
+  BusProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref Bus
+      PathPart: '{proxy+}'

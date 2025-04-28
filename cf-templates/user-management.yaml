@@ -19,6 +19,9 @@ Outputs:
   UserPoolClientID:
     Description: User pool client ID
     Value: !Ref UserPoolClient
+  AuthLambdaARN:
+    Description: ARN of AuthLambda.
+    Value: !GetAtt AuthLambda.Arn
 Resources:
   UserPool:
     Type: AWS::Cognito::UserPool
@@ -167,5 +170,10 @@ Resources:
           COGNITO_USER_POOL_ID: !Ref UserPool
           COGNITO_APP_CLIENT_ID: !Ref UserPoolClient
           APP_CONSOLE_URL: !Ref AppConsoleUrl
-
+  AuthLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AuthLambda
+      Principal: apigateway.amazonaws.com
 # TODO: ADD THE EMAIL VERIFICATION FOR THIS.

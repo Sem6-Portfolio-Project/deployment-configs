@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will integrate the lambda with api gateway
+Parameters:
+  AuthLambdaARN:
+    Type: String
+    Description: This is ARN of the AuthLambda
+  BusLambdaARN:
+    Type: String
+    Description: This is ARN of the BusLambda
+  WSConnectLambdaARN:
+    Type: String
+    Description: This is ARN of the WSConnectLambda
+  WSDisconnectLambdaARN:
+    Type: String
+    Description: This is ARN of the WSDisconnectLambda
+  WSSendLocationLambdaARN:
+    Type: String
+    Description: This is ARN of the WSSendLocationLambda
+  AuthProxyID:
+    Type: String
+    Description: This is a resource id of AuthProxy
+  BusProxyID:
+    Type: String
+    Description: This is a resource id of AuthProxy
+  RestApiID:
+    Type: String
+    Description: This is rest api id
+  WebsocketId:
+    Type: String
+    Description: This is websocket id
+Resources:
+  RoleToExecuteLambdas:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RoleToExecuteLambdas
+      Description: This role give permissions for API Gateway to execute the lambdas.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: LambdaAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: LambdaAccess
+                Effect: Allow
+                Action:
+                  - lambda:InvokeAsync
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Ref AuthLambdaARN
+                  - !Ref BusLambdaARN
+                  - !Ref WSConnectLambdaARN
+                  - !Ref WSDisconnectLambdaARN
+                  - !Ref WSSendLocationLambdaARN
+  AuthProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref AuthProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AuthLambdaARN}/invocations
+        Credintials: !Ref RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+      PassthroughBehavior: WHEN_NO_MATCH
+  AuthProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref AuthProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  BusProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref BusProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BusLambdaARN}/invocations
+        Credintials: !Ref RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+      PassthroughBehavior: WHEN_NO_MATCH
+  BusProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref AuthProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  WSConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebsocketId
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        - !Sub
+            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaARN}/invocations
+            - LambdaARN: !Ref WSConnectLambdaARN
+  WSDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebsocketId
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        - !Sub
+            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaARN}/invocations
+            - LambdaARN: !Ref WSDisconnectLambdaARN
+  WSSendLocationIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebsocketId
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        - !Sub
+            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaARN}/invocations
+            - LambdaARN: !Ref WSSendLocationLambdaARN
+  WSConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: WebsocketId
+      AuthorizationType: NONE
+      RouteKey: $connect
+      Target:
+       - !Sub
+           - integrations/${integration}
+           - integration: !Ref WSConnectIntegration
+  WSDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: WebsocketId
+      AuthorizationType: NONE
+      RouteKey: $disconnect
+      Target:
+       - !Sub
+           - integrations/${integration}
+           - integration: !Ref WSDisconnectIntegration
+  WSSendLocationRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: WebsocketId
+      AuthorizationType: NONE
+      RouteKey: sendlocation
+      Target:
+       - !Sub
+           - integrations/${integration}
+           - integration: !Ref WSSendLocationIntegration
+

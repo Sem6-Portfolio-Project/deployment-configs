@@ -31,6 +31,18 @@ Outputs:
   WebSocketConnPassengersARN:
     Description: ARN of passengers's websocket connection table.
     Value: !GetAtt WebSocketConnPassengers.Arn
+  BusLambdaARN:
+    Description: ARN of BusLambda
+    Value: !GetAtt BusLambda.Arn
+  WSConnectLambdaARN:
+    Description: ARN of WSConnectLambdae.
+    Value: !GetAtt WSConnectLambda.Arn
+  WSDisconnectLambdaARN:
+    Description: ARN of WSDisconnectLambda.
+    Value: !GetAtt WSDisconnectLambda.Arn
+  WSSendLocationLambdaARN:
+    Description: ARN of WSSendLocationLambda.
+    Value: !GetAtt WSSendLocationLambda.Arn
 Resources:
   Buses:
     Type: AWS::DynamoDB::Table
@@ -227,7 +239,7 @@ Resources:
                   - !GetAtt WebSocketConnBuses.Arn
                   - !GetAtt WebSocketConnPassengers.Arn
                   - !GetAtt VehicleStateLogs.Arn
-  WSConnectLambda:
+  WSDisconnectLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: WSDisconnectLambda
@@ -312,3 +324,27 @@ Resources:
       Environment:
         Variables:
           WS_ENDPOINT_URL: !Ref WSEndpointUrl
+  BusLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BusLambda
+      Principal: apigateway.amazonaws.com
+  WSConnectLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WSConnectLambda
+      Principal: apigateway.amazonaws.com
+  WSDisconnectLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WSDisconnectLambda
+      Principal: apigateway.amazonaws.com
+  WSSendLocationLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WSSendLocationLambda
+      Principal: apigateway.amazonaws.com
