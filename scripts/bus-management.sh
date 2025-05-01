@@ -35,3 +35,18 @@ update_bus_lambda() {
   build_and_upload_bus_manage_backend_code
   update_lambda_code "BusLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BUS_BACKEND.zip"
 }
+
+update_WSConnect_lambda() {
+  build_and_upload_bus_manage_backend_code
+  update_lambda_code "WSConnectLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BUS_BACKEND.zip"
+}
+
+update_WSDisconnect_lambda() {
+  build_and_upload_bus_manage_backend_code
+  update_lambda_code "WSDisconnectLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BUS_BACKEND.zip"
+}
+
+update_WSSendLocation_lambda() {
+  build_and_upload_bus_manage_backend_code
+  update_lambda_code "WSSendLocationLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BUS_BACKEND.zip"
+}

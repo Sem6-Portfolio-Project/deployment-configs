@@ -75,7 +75,10 @@ runner() {
     echo "UPDATE OPTIONS"
     echo "1.Update User-management lambdas"
     echo "2.Update Bus-management lambdas"
-    echo "3.All lambdas"
+    echo "3.Update WSConnect lambdas"
+    echo "4.Update WSDisconnect lambdas"
+    echo "5.Update WSSendLocation lambdas"
+    echo "6.All lambdas"
 
     echo -n "Please enter option : "
     read input
@@ -92,15 +95,32 @@ runner() {
     elif [[ "$input" = 2 ]] ;then
       echo "Updating bus management lambdas..."
       update_bus_lambda
-    elif [[ "$input" = 3 ]]; then
+    elif  [[ "$input" = 3 ]] ;then
+      echo "Updating WSConnect lambdas..."
+      update_WSConnect_lambda
+    elif [[ "$input" = 4 ]] ;then
+      echo "Updating WSDisconnect lambdas..."
+      update_WSDisconnect_lambda
+    elif [[ "$input" = 5 ]] ;then
+      echo "Updating WSSendLocation lambdas..."
+      update_WSSendLocation_lambda
+    elif [[ "$input" = 6 ]]; then
       echo "Updating user management lambdas..."
       update_auth_lambda
 
       echo "Updating bus management lambdas..."
       update_bus_lambda
+
+      echo "Updating WSConnect lambdas..."
+      update_WSConnect_lambda
+
+      echo "Updating WSDisconnect lambdas..."
+      update_WSDisconnect_lambda
+
+      echo "Updating WSSendLocation lambdas..."
+      update_WSSendLocation_lambda
     fi
   fi
 }
-
 runner
 
