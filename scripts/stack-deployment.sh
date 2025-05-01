@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source './params.sh'
+source './utils.sh'
 
 #This will deploy the cf stack
 deploy_cf_stack() {
@@ -48,9 +49,11 @@ deploy_cf_stack() {
     # Check if the variable exists in params.sh
     if grep -q "^$var_name=" ./params.sh; then
       # If the variable exists, replace it with the new value using sed
+      echo "replaced $var_name"
       sed -i "/^$var_name=/c\\$line" ./params.sh
     else
       # If the variable doesn't exist, append it
+      echo "appended $var_name"
       echo "$line" >> ./params.sh
     fi
   done
@@ -67,6 +70,7 @@ create_changes_set() {
 
 #This will update the cf stack
 update_changes_set() {
+   #TODO
   set -e
 }
 
@@ -112,10 +116,8 @@ stack_params_for_bus_management() {
   params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-bus/build_backend_bus_management.zip"
   params_map["NodeLayerARN"]="$NodeLayerARN"
   params_map["AppConsoleUrl"]="$ConsoleUrl"
-
-  #TODO: need to add WSEndpointUrl and WebsocketId
-  params_map["WSEndpointUrl"]=""
-  params_map["WebsocketId"]=""
+  params_map["WSEndpointUrl"]="$WSEndpointUrl"
+  params_map["WebsocketId"]="$WebsocketId"
 
   # Prepare parameters for CloudFormation
   param_string=""
@@ -126,5 +128,54 @@ stack_params_for_bus_management() {
   echo "$param_string"
 }
 
+# This will create the stack params for the main-stack-integration.
+stack_params_for_main_stack_integration() {
+
+  declare -A params_map
+  params_map["AuthLambdaARN"]="$AuthLambdaARN"
+  params_map["BusLambdaARN"]="$BusLambdaARN"
+  params_map["WSConnectLambdaARN"]="$WSConnectLambdaARN"
+  params_map["WSDisconnectLambdaARN"]="$WSDisconnectLambdaARN"
+  params_map["WSSendLocationLambdaARN"]="$WSSendLocationLambdaARN"
+  params_map["AuthProxyID"]="$AuthProxyID"
+  params_map["BusProxyID"]="$BusProxyID"
+  params_map["RestApiID"]="$RestApiID"
+  params_map["WebsocketId"]="$WebsocketId"
+  params_map["Stage"]="$Stage"
+
+  # Prepare parameters for CloudFormation
+  param_string=""
+  for key in "${!params_map[@]}"; do
+    param_string+="ParameterKey=$key,ParameterValue=${params_map[$key]} "
+  done
+
+  echo "$param_string"
+}
+
+# This will create the stack params for the main-stack.
+stack_params_for_main_stack() {
+
+  declare -A params_map
+  params_map["Stage"]="$Stage"
+
+  # Prepare parameters for CloudFormation
+  param_string=""
+  for key in "${!params_map[@]}"; do
+    param_string+="ParameterKey=$key,ParameterValue=${params_map[$key]} "
+  done
+
+  echo "$param_string"
+}
+
+# This will upload and validate the main stack integration template.
+upload_and_validate_main_stack_integration_cf_template() {
+    echo "Uploading the main stack integration cf template..."
+    # Upload the CF template to the s3 bucket
+    upload_cf_template "$TEMPLATE_DIR" "main-stack-integration.yaml" "$S3_TEMPLATES_COMMON_PATH"
+
+    echo "Validating the main stack integration cf template..."
+    # validating the cf template
+    validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_PATH/main-stack-integration.yaml"
+}
 #PARAMS=$(stack_params_for_user_management)
 #deploy_cf_stack "user-management" "user-management.yaml" "$PARAMS"

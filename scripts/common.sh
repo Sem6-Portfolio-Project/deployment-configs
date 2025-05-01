@@ -16,4 +16,10 @@ validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_
 PARAMS=$(stack_params_for_common_resources)
 deploy_cf_stack "common-resources" "common-resource.yaml" "$PARAMS"
 
-#TODO: Need to create apis (websockets and etc) here
+# Deploying the main stack ( api + websocket )
+echo "Deploying the main stack..."
+upload_cf_template "$TEMPLATE_DIR" "main-stack.yaml" "$S3_TEMPLATES_COMMON_PATH"
+validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_PATH/main-stack.yaml"
+
+PARAMS=$(stack_params_for_main_stack)
+deploy_cf_stack "main-resources" "main-stack.yaml" "$PARAMS"

@@ -23,7 +23,8 @@ runner() {
     echo "DEPLOYMENT OPTIONS"
     echo "1.Deploy User-management stack"
     echo "2.Deploy Bus-management stack"
-    echo "3.All"
+    echo "3.Deploy main-stack-integration stack"
+    echo "4.All"
 
     echo "PLEASE NOTE THAT IF YOU ALREADY DIDN'T DEPLOY THE COMMON STACK , PLEASE DEPLOY IT FIRST BY RUNNING 'common.sh'"
     echo -n "Please enter option : "
@@ -48,6 +49,11 @@ runner() {
       PARAMS=$(stack_params_for_bus_management)
       deploy_cf_stack "bus-management" "bus-management.yaml" "$PARAMS"
     elif [[ "$input" = 3 ]]; then
+      echo "Deploying main stack integration stack..."
+      upload_and_validate_main_stack_integration_cf_template
+      PARAMS=$(stack_params_for_main_stack_integration)
+      deploy_cf_stack "main-stack-integration" "main-stack-integration.yaml" "$PARAMS"
+    elif [[ "$input" = 4 ]]; then
       echo "Deploying user management stack..."
       build_and_upload_auth_backend_code
       upload_and_validate_auth_cf_template
@@ -59,6 +65,11 @@ runner() {
       upload_and_validate_bus_manage_cf_template
       PARAMS=$(stack_params_for_bus_management)
       deploy_cf_stack "bus-management" "bus-management.yaml" "$PARAMS"
+
+      echo "Deploying main stack integration stack..."
+      upload_and_validate_main_stack_integration_cf_template
+      PARAMS=$(stack_params_for_main_stack_integration)
+      deploy_cf_stack "main-stack-integration" "main-stack-integration.yaml" "$PARAMS"
     fi
   elif [[ "$user_input" = 2 ]]; then
     echo "UPDATE OPTIONS"

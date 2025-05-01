@@ -28,6 +28,9 @@ Parameters:
   WebsocketId:
     Type: String
     Description: This is websocket id
+  Stage:
+    Type: String
+    Description: This is deployment stage
 Resources:
   RoleToExecuteLambdas:
     Type: AWS::IAM::Role
@@ -71,11 +74,10 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AuthLambdaARN}/invocations
-        Credintials: !Ref RoleToExecuteLambdas.Arn
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AuthLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
       MethodResponses:
         - StatusCode: 200
-      PassthroughBehavior: WHEN_NO_MATCH
   AuthProxyOption:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -99,17 +101,16 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BusLambdaARN}/invocations
-        Credintials: !Ref RoleToExecuteLambdas.Arn
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BusLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
       MethodResponses:
         - StatusCode: 200
-      PassthroughBehavior: WHEN_NO_MATCH
   BusProxyOption:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
       HttpMethod: OPTIONS
-      ResourceId: !Ref AuthProxyID
+      ResourceId: !Ref BusProxyID
       RestApiId: !Ref RestApiID
       Integration:
         Type: MOCK
@@ -122,56 +123,66 @@ Resources:
     Properties:
       ApiId: !Ref WebsocketId
       IntegrationType: AWS_PROXY
-      IntegrationUri:
-        - !Sub
-            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaARN}/invocations
-            - LambdaARN: !Ref WSConnectLambdaARN
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSConnectLambdaARN}/invocations
   WSDisconnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref WebsocketId
       IntegrationType: AWS_PROXY
-      IntegrationUri:
-        - !Sub
-            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaARN}/invocations
-            - LambdaARN: !Ref WSDisconnectLambdaARN
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSDisconnectLambdaARN}/invocations
   WSSendLocationIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref WebsocketId
       IntegrationType: AWS_PROXY
-      IntegrationUri:
-        - !Sub
-            - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaARN}/invocations
-            - LambdaARN: !Ref WSSendLocationLambdaARN
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSSendLocationLambdaARN}/invocations
   WSConnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: WebsocketId
+      ApiId: !Ref WebsocketId
       AuthorizationType: NONE
       RouteKey: $connect
-      Target:
-       - !Sub
-           - integrations/${integration}
-           - integration: !Ref WSConnectIntegration
+      Target: !Sub integrations/${WSConnectIntegration}
   WSDisconnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: WebsocketId
+      ApiId: !Ref WebsocketId
       AuthorizationType: NONE
       RouteKey: $disconnect
-      Target:
-       - !Sub
-           - integrations/${integration}
-           - integration: !Ref WSDisconnectIntegration
+      Target: !Sub integrations/${WSDisconnectIntegration}
   WSSendLocationRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: WebsocketId
+      ApiId: !Ref WebsocketId
       AuthorizationType: NONE
       RouteKey: sendlocation
-      Target:
-       - !Sub
-           - integrations/${integration}
-           - integration: !Ref WSSendLocationIntegration
-
+      Target: !Sub integrations/${WSSendLocationIntegration}
+  RestApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref RestApiID
+    DependsOn:
+        - AuthProxyAnyMethod
+        - AuthProxyOption
+        - BusProxyAnyMethod
+        - BusProxyOption
+  RestApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApiID
+      StageName: !Sub rest-${Stage}
+      DeploymentId: !Ref RestApiDeployment
+  WebSocketDeployment:
+      Type: AWS::ApiGatewayV2::Deployment
+      Properties:
+        ApiId: !Ref WebsocketId
+      DependsOn:
+        - WSConnectRoute
+        - WSDisconnectRoute
+        - WSSendLocationRoute
+  WebSocketStage:
+      Type: AWS::ApiGatewayV2::Stage
+      Properties:
+        ApiId: !Ref WebsocketId
+        StageName: !Sub wb-${Stage}
+        DeploymentId: !Ref WebSocketDeployment

@@ -3,6 +3,7 @@ Description: This will create the dynamodb tables,lambda functions for the bus s
 Parameters:
   ResourceBucket:
     Type: String
+    Description: This is the resource bucket name
   LambdaCodeKey:
     Type: String
     Description: S3 key of the Lambda deployment package
@@ -305,7 +306,7 @@ Resources:
                 Resource:
                   - !Sub
                       - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WSId}/*/POST/@connections/*
-                      - WSID: !Ref WebsocketId
+                      - WSId: !Ref WebsocketId
   WSSendLocationLambda:
     Type: AWS::Lambda::Function
     Properties:

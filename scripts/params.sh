@@ -23,19 +23,16 @@ export TEMPLATE_DIR="$PROJECT_ROOT/deployment-configs/cf-templates"
 export AWS_PROFILE=personal
 region=$(aws configure get region --profile "$AWS_PROFILE")
 export AWS_REGION=$region
+export AWS_REGION='ap-south-1'
 export S3_DOMAIN_URL="https://s3.$AWS_REGION.amazonaws.com"
-export RESOURCE_BUCKET_NAME="481665090781-mobile-app-resources"
+#export RESOURCE_BUCKET_NAME="481665090781-mobile-app-resources"
+export RESOURCE_BUCKET_NAME="481665090781-mobile-app-resources-ap"
 export S3_LAMBDA_COMMON_PATH="source-code/lambdas"
 export S3_TEMPLATES_COMMON_PATH="deployment-configs/templates"
 export S3_LAYERS_COMMON_PATH="layers"
 
 #params
 export ConsoleUrl="www.google.com"
+export Stage="dev"
 
-export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:15"
-export UserPoolClientID="3a2huj1a3jaib4tj4jchv2gl1k"
-export UserPoolId="us-east-1_dOtbRZYEL"
-export VehicleStateLogsARN="arn:aws:dynamodb:us-east-1:481665090781:table/VehicleStateLogs"
-export WebSocketConnBusesARN="arn:aws:dynamodb:us-east-1:481665090781:table/WebSocketConnBuses"
-export BusesARN="arn:aws:dynamodb:us-east-1:481665090781:table/Buses"
-export WebSocketConnPassengersARN="arn:aws:dynamodb:us-east-1:481665090781:table/WebSocketConnPassengers"
+
