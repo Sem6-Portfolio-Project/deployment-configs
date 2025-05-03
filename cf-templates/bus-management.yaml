@@ -32,6 +32,9 @@ Outputs:
   WebSocketConnPassengersARN:
     Description: ARN of passengers's websocket connection table.
     Value: !GetAtt WebSocketConnPassengers.Arn
+  WebSocketConnMapperARN:
+    Description: Connection mapper (means busConnection/passengerConnection).
+    Value: !GetAtt WebSocketConnMapper.Arn
   BusLambdaARN:
     Description: ARN of BusLambda
     Value: !GetAtt BusLambda.Arn
@@ -66,6 +69,17 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       KeySchema:
         - AttributeName: bus_no
+          KeyType: HASH
+  WebSocketConnMapper:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnMapper
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: connection_id
           KeyType: HASH
   WebSocketConnBuses:
     Type: AWS::DynamoDB::Table
@@ -185,6 +199,7 @@ Resources:
                   - !GetAtt WebSocketConnBuses.Arn
                   - !GetAtt WebSocketConnPassengers.Arn
                   - !GetAtt VehicleStateLogs.Arn
+                  - !GetAtt WebSocketConnMapper.Arn
   WSConnectLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -240,6 +255,7 @@ Resources:
                   - !GetAtt WebSocketConnBuses.Arn
                   - !GetAtt WebSocketConnPassengers.Arn
                   - !GetAtt VehicleStateLogs.Arn
+                  - !GetAtt WebSocketConnMapper.Arn
   WSDisconnectLambda:
     Type: AWS::Lambda::Function
     Properties:
