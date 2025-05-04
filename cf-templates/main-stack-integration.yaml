@@ -124,18 +124,21 @@ Resources:
       ApiId: !Ref WebsocketId
       IntegrationType: AWS_PROXY
       IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSConnectLambdaARN}/invocations
+      CredentialsArn: !GetAtt RoleToExecuteLambdas.Arn
   WSDisconnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref WebsocketId
       IntegrationType: AWS_PROXY
       IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSDisconnectLambdaARN}/invocations
+      CredentialsArn: !GetAtt RoleToExecuteLambdas.Arn
   WSSendLocationIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref WebsocketId
       IntegrationType: AWS_PROXY
       IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSSendLocationLambdaARN}/invocations
+      CredentialsArn: !GetAtt RoleToExecuteLambdas.Arn
   WSConnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:

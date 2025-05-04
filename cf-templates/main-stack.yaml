@@ -6,7 +6,7 @@ Parameters:
     Description: This is the deployed stage
 Outputs:
   WSEndpointUrl:
-    Value: !Sub https://${Websocket}.execute-api.${AWS::Region}.amazonaws.com/wb-${Stage}/@connections
+    Value: !Sub https://${Websocket}.execute-api.${AWS::Region}.amazonaws.com/wb-${Stage}/
     Description: This this websocket end point url ( this is used to send message to the ws by the server )
   WebsocketId:
     Value: !Ref Websocket
