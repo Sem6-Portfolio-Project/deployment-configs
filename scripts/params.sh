@@ -34,6 +34,7 @@ export S3_LAYERS_COMMON_PATH="layers"
 #params
 export ConsoleUrl="www.google.com"
 export Stage="dev"
+export PlatformApplicationARN="arn:aws:sns:us-east-1:481665090781:app/GCM/FCM-integration"
 
 export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:21"
 export WebsocketId="ex42g0mzif"

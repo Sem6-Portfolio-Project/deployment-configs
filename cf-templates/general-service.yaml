@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create the dynamodb tables,lambda functions for the general services
+Parameters:
+  ResourceBucket:
+    Type: String
+    Description: This is the resource bucket name
+  LambdaCodeKey:
+    Type: String
+    Description: S3 key of the Lambda deployment package
+  NodeLayerARN:
+    Type: String
+    Description: ARN of the node module layer
+  AppConsoleUrl:
+    Type: String
+    Description: Console url
+  PlatformApplicationARN:
+    Type: String
+    Description: ARN of the platform application arn
+Outputs:
+  PlatformEndpointsARN:
+    Description: ARN of PlatformEndpoints saved table.
+    Value: !GetAtt PlatformEndpoints.Arn
+  Notifications:
+    Description: ARN of Notifications table.
+    Value: !GetAtt Notifications.Arn
+  NotificationLAmbdaARN:
+    Description: ARN of notification invoker lambda
+    Value: !GetAtt NotificationInvoker.Arn
+Resources:
+  PlatformEndpoints:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PlatformEndpoints
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: connection_id
+          KeyType: HASH
+  Notifications:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Notifications
+      AttributeDefinitions:
+        - AttributeName: notification_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: notification_id
+          KeyType: HASH
+  NotificationInvokerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: NotificationInvokerExecutionRole
+      Description: This role give permissions for lambda to execute certain action on dynamodb and ApiGateway.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt PlatformEndpoints.Arn
+                  - !GetAtt Notifications.Arn
+        - PolicyName: SNSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SNSAccess
+                Effect: Allow
+                Action:
+                  - sns:CreatePlatformEndpoint
+                  - sns:DeleteEndpoint
+                  - sns:GetEndpointAttributes
+                  - sns:ListTopics
+                  - sns:Subscribe
+                  - sns:Unsubscribe
+                  - sns:Publish
+                Resource:
+                  - !Ref SystemNotifications
+                  - !Ref LostItmesNotifications
+  NotificationInvoker:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: NotificationInvoker
+      Description: This lambda will invoke defined in lib/invokers/notification.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/invokers/notification.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt NotificationInvokerExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
+          SYS_NOTIFI_TOPIC_ARN: !Ref SystemNotifications
+          LOSTITEM_TOPIC_ARN: !Ref LostItmesNotifications
+          PLATFORM_APPLICATION_ARN: !Ref PlatformApplicationARN
+  # todo: need to create lambda and lambdarole for the handle general services
+  NotificationQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: NotificationQueue
+  LambdaSQSSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: True
+      EventSourceArn: !GetAtt NotificationQueue.Arn
+      FunctionName: !Ref NotificationInvoker
+  SystemNotifications:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: SystemNotifications
+  LostItmesNotifications:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: LostItmesNotifications
