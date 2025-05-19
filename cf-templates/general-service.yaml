@@ -35,6 +35,9 @@ Outputs:
   GeneralServiceLambdaARN:
     Description: ARN of the general service lambda.
     Value: !GetAtt GeneralServiceLambda.Arn
+  NotificationQueueUrl:
+    Description: queue url of the notification queue.
+    Value: !Ref NotificationQueue
 Resources:
   LostAndFoundItems:
     Type: AWS::DynamoDB::Table
