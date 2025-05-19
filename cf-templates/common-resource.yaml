@@ -5,11 +5,17 @@ Parameters:
     Type: String
   NodeLayerCodeKey:
     Type: String
-    Description: S3 key for the lambda node layer
+    Description: S3 key for the lambda node layer.
 Outputs:
   NodeLayerARN:
-    Description: ARN of the node layer
+    Description: ARN of the node layer.
     Value: !Ref NodeLayer
+  NotificationQueueUrl:
+    Description: Notification queue url.
+    Value: !Ref NotificationQueue
+  NotificationQueueARN:
+    Description: ARN of Notification queue.
+    Value: !GetAtt NotificationQueue.Arn
 Resources:
   NodeLayer:
     Type: AWS::Lambda::LayerVersion
@@ -19,3 +25,7 @@ Resources:
       Content:
         S3Bucket: !Ref ResourceBucket
         S3Key: !Ref NodeLayerCodeKey
+  NotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: NotificationQueue

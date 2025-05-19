@@ -12,6 +12,12 @@ Parameters:
   AppConsoleUrl:
     Type: String
     Description: Console url
+  NotificationQueueARN:
+    Type: String
+    Description: ARN of notification queue.
+  NotificationQueueUrl:
+    Type: String
+    Description: notification queue url.
 Outputs:
   UserPoolId:
     Description: User pool ID
@@ -149,6 +155,18 @@ Resources:
                   - !Sub
                       - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
                       - PoolId: !Ref UserPool
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !Ref NotificationQueueARN
   AuthLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -170,6 +188,7 @@ Resources:
           COGNITO_USER_POOL_ID: !Ref UserPool
           COGNITO_APP_CLIENT_ID: !Ref UserPoolClient
           APP_CONSOLE_URL: !Ref AppConsoleUrl
+          NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
   AuthLambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:

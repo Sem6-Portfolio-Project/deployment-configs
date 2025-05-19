@@ -19,6 +19,12 @@ Parameters:
   CustomerResourcesBucketARN:
     Type: String
     Description: ARN of the cutomer data stored bucket.
+  NotificationQueueARN:
+    Type: String
+    Description: ARN of notification queue.
+  NotificationQueueUrl:
+    Type: String
+    Description: notification queue url.
 Outputs:
   PlatformEndpointsARN:
     Description: ARN of PlatformEndpoints saved table.
@@ -35,9 +41,6 @@ Outputs:
   GeneralServiceLambdaARN:
     Description: ARN of the general service lambda.
     Value: !GetAtt GeneralServiceLambda.Arn
-  NotificationQueueUrl:
-    Description: queue url of the notification queue.
-    Value: !Ref NotificationQueue
 Resources:
   LostAndFoundItems:
     Type: AWS::DynamoDB::Table
@@ -198,7 +201,7 @@ Resources:
                   - sqs:DeleteMessage
                   - sqs:PurgeQueue
                 Resource:
-                  - !GetAtt NotificationQueue.Arn
+                  - !Ref NotificationQueueARN
         - PolicyName: S3Access
           PolicyDocument:
             Version: 2012-10-17
@@ -232,15 +235,12 @@ Resources:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           APP_CONSOLE_URL: !Ref AppConsoleUrl
-  NotificationQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: NotificationQueue
+          NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
   LambdaSQSSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: True
-      EventSourceArn: !GetAtt NotificationQueue.Arn
+      EventSourceArn: !Ref NotificationQueueARN
       FunctionName: !Ref NotificationInvoker
   SystemNotifications:
     Type: AWS::SNS::Topic

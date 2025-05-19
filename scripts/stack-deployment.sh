@@ -98,6 +98,9 @@ stack_params_for_user_management() {
   params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-auth/build_backend_auth.zip"
   params_map["NodeLayerARN"]="$NodeLayerARN"
   params_map["AppConsoleUrl"]="$ConsoleUrl"
+  params_map["NotificationQueueARN"]="$NotificationQueueARN"
+  params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
+  
 
   # Prepare parameters for CloudFormation
   param_string=""
@@ -118,6 +121,8 @@ stack_params_for_bus_management() {
   params_map["AppConsoleUrl"]="$ConsoleUrl"
   params_map["WSEndpointUrl"]="$WSEndpointUrl"
   params_map["WebsocketId"]="$WebsocketId"
+  params_map["NotificationQueueARN"]="$NotificationQueueARN"
+  params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
 
   # Prepare parameters for CloudFormation
   param_string=""
@@ -177,6 +182,8 @@ stack_params_for_general_services_stack() {
   params_map["AppConsoleUrl"]="$ConsoleUrl"
   params_map["PlatformApplicationARN"]="$PlatformApplicationARN"
   params_map["CustomerResourcesBucketARN"]="$CustomerResourcesBucketARN"
+  params_map["NotificationQueueARN"]="$NotificationQueueARN"
+  params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
 
   # Prepare parameters for CloudFormation
   param_string=""

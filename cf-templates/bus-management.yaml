@@ -12,13 +12,19 @@ Parameters:
     Description: ARN of the node module layer
   AppConsoleUrl:
     Type: String
-    Description: Console url
+    Description: Console url.
   WSEndpointUrl:
     Type: String
-    Description: Websocket end point url
+    Description: Websocket end point url.
   WebsocketId:
     Type: String
     Description: Uniqe Identifier of the websocket api
+  NotificationQueueARN:
+    Type: String
+    Description: ARN of notification queue.
+  NotificationQueueUrl:
+    Type: String
+    Description: notification queue url.
 Outputs:
   VehicleStateLogsARN:
     Description: ARN of vehicle state logs table.
@@ -140,6 +146,18 @@ Resources:
                   - dynamodb:UpdateItem
                 Resource:
                   - !GetAtt Buses.Arn
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !Ref NotificationQueueARN
   BusLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -159,6 +177,7 @@ Resources:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           APP_CONSOLE_URL: !Ref AppConsoleUrl
+          NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
   WSConnectLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
