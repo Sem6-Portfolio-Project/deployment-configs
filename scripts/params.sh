@@ -9,7 +9,7 @@ else
 fi
 
 #This will give project root. (/../..) change accordingly based on the project setup
-export PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd) /../.."
+export PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)/../.."
 
 #Project directories
 export AUTH_BACKEND="$PROJECT_ROOT/mobile-app-backend-auth"
@@ -39,12 +39,12 @@ export ConsoleUrl="www.google.com"
 export Stage="dev"
 export PlatformApplicationARN="arn:aws:sns:us-east-1:481665090781:app/GCM/FCM-integration"
 
-export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:21"
-export WebsocketId="ex42g0mzif"
-export BusProxyID="w8naaf"
-export WSEndpointUrl="https://ex42g0mzif.execute-api.us-east-1.amazonaws.com/wb-dev/@connections"
-export RestApiID="0gmhkbw628"
-export AuthProxyID="shedhp"
+export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:22"
+export WebsocketId="caxq7fb9r6"
+export BusProxyID="p8yi50"
+export WSEndpointUrl="https://caxq7fb9r6.execute-api.us-east-1.amazonaws.com/wb-dev/@connections"
+export RestApiID="6sbc5u3n56"
+export AuthProxyID="83t32k"
 export UserPoolClientID="4363pksp47t4fehp0og5i3cgou"
 export AuthLambdaARN="arn:aws:lambda:us-east-1:481665090781:function:AuthLambda"
 export UserPoolId="us-east-1_iOPnVyxCk"

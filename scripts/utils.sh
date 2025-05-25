@@ -103,6 +103,7 @@ upload_cf_template() {
   template_dir=$1
   template_name=$2
   s3_template_common_path=$3
+  echo $template_dir
   s3_sync "$template_dir" "$template_name" "$s3_template_common_path"
 }
 
