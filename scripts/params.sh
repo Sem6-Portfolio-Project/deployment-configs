@@ -21,7 +21,7 @@ export LAYERS_DIR="$PROJECT_ROOT/layers"
 export TEMPLATE_DIR="$PROJECT_ROOT/deployment-configs/cf-templates"
 
 #Credintials
-export AWS_PROFILE=personal
+export AWS_PROFILE=project
 region=$(aws configure get region --profile "$AWS_PROFILE")
 export AWS_REGION=$region
 export S3_DOMAIN_URL="https://s3.$AWS_REGION.amazonaws.com"
@@ -31,7 +31,7 @@ export S3_TEMPLATES_COMMON_PATH="deployment-configs/templates"
 export S3_LAYERS_COMMON_PATH="layers"
 
 #Customers related sources
-export CustomerResourcesBucketARN=""
+export CustomerResourcesBucketARN="arn:aws:s3:::481665090781-customer-resources"
 
 
 #params

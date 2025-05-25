@@ -56,8 +56,12 @@ Resources:
       UserPoolAddOns:
         AdvancedSecurityMode: 'OFF'
       UserPoolName: MobileApp
+      AutoVerifiedAttributes:
+        - email
       VerificationMessageTemplate:
         DefaultEmailOption: CONFIRM_WITH_CODE
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -195,4 +199,3 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref AuthLambda
       Principal: apigateway.amazonaws.com
-# TODO: ADD THE EMAIL VERIFICATION FOR THIS.
