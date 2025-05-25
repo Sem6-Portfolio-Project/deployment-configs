@@ -7,8 +7,8 @@ source './stack-deployment.sh'
 
 # Deploying the lambda layer
 echo "Deploying the node module layer..."
-create_layer_zip "lambda_node_layer"
-upload_lambda_layer_to_s3 "lambda_node_layer"
+# create_layer_zip "lambda_node_layer"
+# upload_lambda_layer_to_s3 "lambda_node_layer"
 
 upload_cf_template "$TEMPLATE_DIR" "common-resource.yaml" "$S3_TEMPLATES_COMMON_PATH"
 validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_PATH/common-resource.yaml"
