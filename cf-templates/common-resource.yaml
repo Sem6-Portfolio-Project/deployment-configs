@@ -29,3 +29,5 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: NotificationQueue
+      VisibilityTimeout: 65
+      MessageRetentionPeriod: 86400
