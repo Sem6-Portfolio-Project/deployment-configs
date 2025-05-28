@@ -139,11 +139,13 @@ stack_params_for_main_stack_integration() {
   declare -A params_map
   params_map["AuthLambdaARN"]="$AuthLambdaARN"
   params_map["BusLambdaARN"]="$BusLambdaARN"
+  params_map["GeneralServiceLambdaARN"]="$GeneralServiceLambdaARN"
   params_map["WSConnectLambdaARN"]="$WSConnectLambdaARN"
   params_map["WSDisconnectLambdaARN"]="$WSDisconnectLambdaARN"
   params_map["WSSendLocationLambdaARN"]="$WSSendLocationLambdaARN"
   params_map["AuthProxyID"]="$AuthProxyID"
   params_map["BusProxyID"]="$BusProxyID"
+  params_map["GeneralProxyID"]="$GeneralProxyID"
   params_map["RestApiID"]="$RestApiID"
   params_map["WebsocketId"]="$WebsocketId"
   params_map["Stage"]="$Stage"
@@ -204,5 +206,3 @@ upload_and_validate_main_stack_integration_cf_template() {
     # validating the cf template
     validate_cf_template "$S3_DOMAIN_URL/$RESOURCE_BUCKET_NAME/$S3_TEMPLATES_COMMON_PATH/main-stack-integration.yaml"
 }
-#PARAMS=$(stack_params_for_user_management)
-#deploy_cf_stack "user-management" "user-management.yaml" "$PARAMS"

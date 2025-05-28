@@ -16,12 +16,18 @@ Parameters:
   WSSendLocationLambdaARN:
     Type: String
     Description: This is ARN of the WSSendLocationLambda
+  GeneralServiceLambdaARN:
+    Type: String
+    Description: This is ARN of the GeneralServiceLambda   
   AuthProxyID:
     Type: String
     Description: This is a resource id of AuthProxy
   BusProxyID:
     Type: String
     Description: This is a resource id of AuthProxy
+  GeneralProxyID:
+    Type: String
+    Description: This is a resource id of GeneralProxy
   RestApiID:
     Type: String
     Description: This is rest api id
@@ -64,6 +70,7 @@ Resources:
                   - !Ref WSConnectLambdaARN
                   - !Ref WSDisconnectLambdaARN
                   - !Ref WSSendLocationLambdaARN
+                  - !Ref GeneralServiceLambdaARN
   AuthProxyAnyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -111,6 +118,33 @@ Resources:
       AuthorizationType: NONE
       HttpMethod: OPTIONS
       ResourceId: !Ref BusProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  GeneralProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref GeneralProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GeneralServiceLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  GeneralProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref GeneralProxyID
       RestApiId: !Ref RestApiID
       Integration:
         Type: MOCK
@@ -169,6 +203,8 @@ Resources:
         - AuthProxyOption
         - BusProxyAnyMethod
         - BusProxyOption
+        - GeneralProxyAnyMethod
+        - GeneralProxyOption
   RestApiStage:
     Type: AWS::ApiGateway::Stage
     Properties:

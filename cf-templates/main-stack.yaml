@@ -17,6 +17,9 @@ Outputs:
   BusProxyID:
     Value: !Ref BusProxy
     Description: This is a resource id of AuthProxy
+  GeneralProxyID:
+    Value: !Ref GeneralProxy
+    Description: This is a resource id of GeneralProxy
   RestApiID:
     Value: !Ref BusTrackingSys
     Description: This is rest api id
@@ -47,6 +50,12 @@ Resources:
       RestApiId: !Ref BusTrackingSys
       ParentId: !GetAtt BusTrackingSys.RootResourceId
       PathPart: 'bus'
+  General:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'general'
   AuthProxy:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -58,4 +67,10 @@ Resources:
     Properties:
       RestApiId: !Ref BusTrackingSys
       ParentId: !Ref Bus
+      PathPart: '{proxy+}'
+  GeneralProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref General
       PathPart: '{proxy+}'
