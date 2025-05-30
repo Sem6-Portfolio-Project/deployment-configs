@@ -58,11 +58,11 @@ Resources:
     Properties:
       TableName: PlatformEndpoints
       AttributeDefinitions:
-        - AttributeName: connection_id
+        - AttributeName: email
           AttributeType: S
       BillingMode: PAY_PER_REQUEST
       KeySchema:
-        - AttributeName: connection_id
+        - AttributeName: email
           KeyType: HASH
   Notifications:
     Type: AWS::DynamoDB::Table
@@ -121,12 +121,6 @@ Resources:
               - Sid: SNSAccess
                 Effect: Allow
                 Action:
-                  - sns:CreatePlatformEndpoint
-                  - sns:DeleteEndpoint
-                  - sns:GetEndpointAttributes
-                  - sns:ListTopics
-                  - sns:Subscribe
-                  - sns:Unsubscribe
                   - sns:Publish
                 Resource:
                   - !Ref SystemNotifications
@@ -217,6 +211,22 @@ Resources:
                   - s3:PutObject
                 Resource:
                   - !Ref CustomerResourcesBucketARN
+        - PolicyName: SNSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SNSAccess
+                Effect: Allow
+                Action:
+                  - sns:CreatePlatformEndpoint
+                  - sns:DeleteEndpoint
+                  - sns:GetEndpointAttributes
+                  - sns:Subscribe
+                  - sns:Unsubscribe
+                Resource:
+                  - !Ref SystemNotifications
+                  - !Ref LostItmesNotifications
+                  - !Ref PlatformApplicationARN
   GeneralServiceLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -236,7 +246,10 @@ Resources:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           APP_CONSOLE_URL: !Ref AppConsoleUrl
+          SYS_NOTIFI_TOPIC_ARN: !Ref SystemNotifications
+          LOSTITEM_TOPIC_ARN: !Ref LostItmesNotifications
           NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
+          PLATFORM_APPLICATION_ARN: !Ref PlatformApplicationARN
   LambdaSQSSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
