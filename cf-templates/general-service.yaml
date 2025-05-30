@@ -190,6 +190,7 @@ Resources:
                   - dynamodb:UpdateItem
                 Resource:
                   - !GetAtt LostAndFoundItems.Arn
+                  - !GetAtt PlatformEndpoints.Arn
         - PolicyName: SQSAccess
           PolicyDocument:
             Version: 2012-10-17
@@ -250,3 +251,15 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: LostItmesNotifications
+  GeneralServiceLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GeneralServiceLambda
+      Principal: apigateway.amazonaws.com
+  NotificationInvokerInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref NotificationInvoker
+      Principal: sqs.amazonaws.com
