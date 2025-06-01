@@ -47,11 +47,11 @@ Resources:
     Properties:
       TableName: LostAndFoundItems
       AttributeDefinitions:
-        - AttributeName: reporter_email
+        - AttributeName: id
           AttributeType: S
       BillingMode: PAY_PER_REQUEST
       KeySchema:
-        - AttributeName: reporter_email
+        - AttributeName: id
           KeyType: HASH
   PlatformEndpoints:
     Type: AWS::DynamoDB::Table
@@ -69,11 +69,11 @@ Resources:
     Properties:
       TableName: Notifications
       AttributeDefinitions:
-        - AttributeName: notification_id
+        - AttributeName: id
           AttributeType: S
       BillingMode: PAY_PER_REQUEST
       KeySchema:
-        - AttributeName: notification_id
+        - AttributeName: id
           KeyType: HASH
   NotificationInvokerExecutionRole:
     Type: AWS::IAM::Role
