@@ -1,0 +1,13 @@
+// lambda (bookings)
+
+// role for paymentsHandler
+
+// invokers (lambdas) paymentsHandler, 
+
+// role for unlocker
+
+// invokers (lambdas) unlocker,
+
+// create the permissions for the apigateway to access paymentsHandler
+
+// create the permissions for the apigateway to access unlocker
