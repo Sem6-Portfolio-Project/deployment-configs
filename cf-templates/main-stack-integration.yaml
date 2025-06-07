@@ -25,9 +25,6 @@ Parameters:
   PaymentHandleInvokerLambdaARN:
     Type: String
     Description: This is ARN of the PaymentHandleInvokerLambda
-  SeatsUnlockeInvokerLambdaARN:
-    Type: String
-    Description: This is ARN of the SeatsUnlockeInvokerLambda 
   AuthProxyID:
     Type: String
     Description: This is a resource id of AuthProxy
@@ -37,6 +34,9 @@ Parameters:
   GeneralProxyID:
     Type: String
     Description: This is a resource id of GeneralProxy
+  PayhereNotifyPostID:
+    Type: String
+    Description: This is a resource id of PayhereNotifyPost   
   RestApiID:
     Type: String
     Description: This is rest api id
@@ -81,6 +81,7 @@ Resources:
                   - !Ref WSSendLocationLambdaARN
                   - !Ref GeneralServiceLambdaARN
                   - !Ref BookingLambdaARN
+                  - !Ref PaymentHandleInvokerLambdaARN
   AuthProxyAnyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -182,6 +183,33 @@ Resources:
       AuthorizationType: NONE
       HttpMethod: OPTIONS
       ResourceId: !Ref BookingProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  PayhereNotifyPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref PayhereNotifyPostID
+      RestApiId: !Ref RestApiID
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PaymentHandleInvokerLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  PayhereNotifyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref PayhereNotifyPostID
       RestApiId: !Ref RestApiID
       Integration:
         Type: MOCK

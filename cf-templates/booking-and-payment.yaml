@@ -39,10 +39,10 @@ Outputs:
     Description: ARN of the SeatsUnlockeInvokerLambda.
     Value: !GetAtt SeatsUnlockeInvokerLambda.Arn
 Resources:
-  SeatUlockerQueue:
+  SeatUnlockerQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: SeatUlockerQueue
+      QueueName: SeatUnlockerQueue
       VisibilityTimeout: 65
       MessageRetentionPeriod: 86400
   Payments:
