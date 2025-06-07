@@ -19,6 +19,15 @@ Parameters:
   GeneralServiceLambdaARN:
     Type: String
     Description: This is ARN of the GeneralServiceLambda   
+  BookingLambdaARN:
+    Type: String
+    Description: This is ARN of the BookingLambda
+  PaymentHandleInvokerLambdaARN:
+    Type: String
+    Description: This is ARN of the PaymentHandleInvokerLambda
+  SeatsUnlockeInvokerLambdaARN:
+    Type: String
+    Description: This is ARN of the SeatsUnlockeInvokerLambda 
   AuthProxyID:
     Type: String
     Description: This is a resource id of AuthProxy
@@ -71,6 +80,7 @@ Resources:
                   - !Ref WSDisconnectLambdaARN
                   - !Ref WSSendLocationLambdaARN
                   - !Ref GeneralServiceLambdaARN
+                  - !Ref BookingLambdaARN
   AuthProxyAnyMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -152,6 +162,33 @@ Resources:
           - StatusCode: 200
       MethodResponses:
         - StatusCode: 200
+  BookingProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref BookingProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BookingLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  BookingProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref BookingProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
   WSConnectIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
@@ -205,6 +242,8 @@ Resources:
         - BusProxyOption
         - GeneralProxyAnyMethod
         - GeneralProxyOption
+        - BookingProxyAnyMethod
+        - BookingProxyOption
   RestApiStage:
     Type: AWS::ApiGateway::Stage
     Properties:

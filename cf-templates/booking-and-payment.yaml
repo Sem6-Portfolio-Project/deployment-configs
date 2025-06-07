@@ -29,6 +29,15 @@ Outputs:
   PaymentsARN:
     Description: ARN of the payments saved table.
     Value: !GetAtt Payments.Arn
+  BookingLambdaARN:
+    Description: ARN of the BookingLambda.
+    Value: !GetAtt BookingLambda.Arn
+  PaymentHandleInvokerLambdaARN:
+    Description: ARN of the PaymentHandleInvokerLambda.
+    Value: !GetAtt PaymentHandleInvokerLambda.Arn
+  SeatsUnlockeInvokerLambdaARN:
+    Description: ARN of the SeatsUnlockeInvokerLambda.
+    Value: !GetAtt SeatsUnlockeInvokerLambda.Arn
 Resources:
   SeatUlockerQueue:
     Type: AWS::SQS::Queue
