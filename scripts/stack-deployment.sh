@@ -196,6 +196,27 @@ stack_params_for_general_services_stack() {
   echo "$param_string"
 }
 
+# This will create the stack params for the booking and payment services stack.
+stack_params_for_booking_and_payment_services_stack() {
+
+  declare -A params_map
+  params_map["ResourceBucket"]="$RESOURCE_BUCKET_NAME"
+  params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-booking-payment/build_booking_payment_management.zip"
+  params_map["NodeLayerARN"]="$NodeLayerARN"
+  params_map["AppConsoleUrl"]="$ConsoleUrl"
+  params_map["NotificationQueueARN"]="$NotificationQueueARN"
+  params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
+  params_map["BusesARN"]="$BusesARN"
+
+  # Prepare parameters for CloudFormation
+  param_string=""
+  for key in "${!params_map[@]}"; do
+    param_string+="ParameterKey=$key,ParameterValue=${params_map[$key]} "
+  done
+
+  echo "$param_string"
+}
+
 # This will upload and validate the main stack integration template.
 upload_and_validate_main_stack_integration_cf_template() {
     echo "Uploading the main stack integration cf template..."

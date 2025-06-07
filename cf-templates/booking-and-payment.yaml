@@ -35,9 +35,9 @@ Outputs:
   PaymentHandleInvokerLambdaARN:
     Description: ARN of the PaymentHandleInvokerLambda.
     Value: !GetAtt PaymentHandleInvokerLambda.Arn
-  SeatsUnlockeInvokerLambdaARN:
-    Description: ARN of the SeatsUnlockeInvokerLambda.
-    Value: !GetAtt SeatsUnlockeInvokerLambda.Arn
+  SeatsUnlockInvokerLambdaARN:
+    Description: ARN of the SeatsUnlockInvokerLambda.
+    Value: !GetAtt SeatsUnlockInvokerLambda.Arn
 Resources:
   SeatUnlockerQueue:
     Type: AWS::SQS::Queue
@@ -221,10 +221,10 @@ Resources:
                   - dynamodb:UpdateItem
                 Resource:
                   - !Ref BusesARN
-  SeatsUnlockeInvokerLambda:
+  SeatsUnlockInvokerLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: SeatsUnlockeInvokerLambda
+      FunctionName: SeatsUnlockInvokerLambda
       Description: This lambda will invoke defined in lib/invokers/seats-unlocker.js.
       Code:
         S3Bucket: !Ref ResourceBucket

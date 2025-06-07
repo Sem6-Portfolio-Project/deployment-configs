@@ -15,6 +15,7 @@ export PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null &&
 export AUTH_BACKEND="$PROJECT_ROOT/mobile-app-backend-auth"
 export BUS_MANAGE_BACKEND="$PROJECT_ROOT/bus-tracking-and-scheduling"
 export GENERAL_SERVICES_BACKEND="$PROJECT_ROOT/general-services-hub"
+export BOOKING_PAYMENT_BACKEND="$PROJECT_ROOT/bookings-and-payments-handling"
 export LAYERS_DIR="$PROJECT_ROOT/layers"
 
 #Template directories
