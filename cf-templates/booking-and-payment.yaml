@@ -29,6 +29,9 @@ Outputs:
   PaymentsARN:
     Description: ARN of the payments saved table.
     Value: !GetAtt Payments.Arn
+  OrdersARN:
+    Description: ARN of the Orders saved table.
+    Value: !GetAtt Orders.Arn
   BookingLambdaARN:
     Description: ARN of the BookingLambda.
     Value: !GetAtt BookingLambda.Arn
@@ -56,6 +59,17 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+  Orders:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Orders
+      AttributeDefinitions:
+        - AttributeName: order_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: order_id
+          KeyType: HASH   
   BookingLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -93,6 +107,7 @@ Resources:
                   - dynamodb:UpdateItem
                 Resource:
                   - !Ref BusesARN
+                  - !GetAtt Orders.Arn
   BookingLambda:
     Type: AWS::Lambda::Function
     Properties:
