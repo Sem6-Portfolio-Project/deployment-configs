@@ -139,7 +139,7 @@ Resources:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           APP_CONSOLE_URL: !Ref AppConsoleUrl
-          SEAT_UNLOCKER_QUEUE: !GetAtt SeatUnlockerQueue.QueueArn
+          SEAT_UNLOCKER_QUEUE: !Ref SeatUnlockerQueue
           PAYHERE_NOTIFY_URL: !Ref PayhereNotifyUrl
           PAYHERE_MARCHANT_ID: !Ref PayhereMarchantID
           PAYHERE_MARCHANT_SECRET: !Ref PayhereMarchantSecret
@@ -275,8 +275,8 @@ Resources:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
       Enabled: True
-      EventSourceArn: !Ref NotificationQueueARN
-      FunctionName: !Ref SeatsUnlockeInvokerLambda
+      EventSourceArn: !GetAtt SeatUnlockerQueue.Arn
+      FunctionName: !Ref SeatsUnlockInvokerLambda
   BookingLambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -289,10 +289,10 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref PaymentHandleInvokerLambda
       Principal: apigateway.amazonaws.com
-  SeatsUnlockeInvokerLambdaInvokePermission:
+  SeatsUnlockInvokerLambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref SeatsUnlockeInvokerLambda
+      FunctionName: !Ref SeatsUnlockInvokerLambda
       Principal: sqs.amazonaws.com
 

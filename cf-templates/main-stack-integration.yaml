@@ -34,6 +34,9 @@ Parameters:
   GeneralProxyID:
     Type: String
     Description: This is a resource id of GeneralProxy
+  BookingProxyID:
+    Type: String
+    Description: This is a resource id of BookingProxy
   PayhereNotifyPostID:
     Type: String
     Description: This is a resource id of PayhereNotifyPost   
