@@ -13,12 +13,24 @@ Parameters:
   AppConsoleUrl:
     Type: String
     Description: Console url
+  PlatformEndpointsARN:
+    Type: String
+    Description: ARN of the application enpoints saved table.
   NotificationQueueARN:
     Type: String
     Description: ARN of notification queue.
   NotificationQueueUrl:
     Type: String
     Description: notification queue url.
+  PayhereNotifyUrl: 
+    Type: String
+    Description: payhere server to server callback endpoint url.
+  PayhereMarchantID: 
+    Type: String
+    Description: payhere marchant id.
+  PayhereMarchantSecret: 
+    Type: String
+    Description: payhere marchant secret.
   BusesARN:
     Type: String
     Description: ARN of the bus data saved ddb table.
@@ -128,6 +140,9 @@ Resources:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           APP_CONSOLE_URL: !Ref AppConsoleUrl
           SEAT_UNLOCKER_QUEUE: !GetAtt SeatUnlockerQueue.QueueArn
+          PAYHERE_NOTIFY_URL: !Ref PayhereNotifyUrl
+          PAYHERE_MARCHANT_ID: !Ref PayhereMarchantID
+          PAYHERE_MARCHANT_SECRET: !Ref PayhereMarchantSecret
   PaymentHandleLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -166,6 +181,7 @@ Resources:
                 Resource:
                   - !Ref BusesARN
                   - !GetAtt Payments.Arn
+                  - !Ref PlatformEndpointsARN
         - PolicyName: SQSAccess
           PolicyDocument:
             Version: 2012-10-17

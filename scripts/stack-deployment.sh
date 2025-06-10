@@ -204,8 +204,12 @@ stack_params_for_booking_and_payment_services_stack() {
   params_map["LambdaCodeKey"]="$S3_LAMBDA_COMMON_PATH/backend-booking-payment/build_booking_payment_management.zip"
   params_map["NodeLayerARN"]="$NodeLayerARN"
   params_map["AppConsoleUrl"]="$ConsoleUrl"
+  params_map["PlatformEndpointsARN"]="$PlatformEndpointsARN"
   params_map["NotificationQueueARN"]="$NotificationQueueARN"
   params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
+  params_map["PayhereNotifyUrl"]="$PayhereNotifyUrl"
+  params_map["PayhereMarchantID"]="$PayhereMarchantID"
+  params_map["PayhereMarchantSecret"]="$PayhereMarchantSecret"
   params_map["BusesARN"]="$BusesARN"
 
   # Prepare parameters for CloudFormation
