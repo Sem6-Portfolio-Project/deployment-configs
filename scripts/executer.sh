@@ -60,6 +60,7 @@ runner() {
       deploy_cf_stack "general-service-hub" "general-service.yaml" "$PARAMS"
     elif [[ "$input" = 4 ]]; then
       echo "Deploying booking-payment management stack..."
+      build_and_upload_payment_booking_backend_code
       upload_and_validate_payment_booking_cf_template
       PARAMS=$(stack_params_for_booking_and_payment_services_stack)
       deploy_cf_stack "booking-payment-management" "booking-and-payment.yaml" "$PARAMS"
@@ -88,6 +89,7 @@ runner() {
       deploy_cf_stack "general-service-hub" "general-service.yaml" "$PARAMS"
 
       echo "Deploying booking-payment management stack..."
+      build_and_upload_payment_booking_backend_code
       upload_and_validate_payment_booking_cf_template
       PARAMS=$(stack_params_for_booking_and_payment_services_stack)
       deploy_cf_stack "booking-payment-management" "booking-and-payment.yaml" "$PARAMS"
