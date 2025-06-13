@@ -43,6 +43,7 @@ export PayhereNotifyUrl=""
 export PayhereMarchantID="1227557"
 export PayhereMarchantSecret="MjUyODUzMjg3OTMwMTA1MTQ5Mzg2NDk2OTA2OTIzMzIxNTI3MTU4"
 export StripeSecretKey=""
+export FCMIntegrationARN="arn:aws:sns:us-east-1:481665090781:app/GCM/FCM-integration"
 
 export NodeLayerARN="arn:aws:lambda:us-east-1:481665090781:layer:NodeModuleLayer:30"
 export NotificationQueueUrl="https://sqs.us-east-1.amazonaws.com/481665090781/NotificationQueue"

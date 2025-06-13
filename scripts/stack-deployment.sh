@@ -190,6 +190,7 @@ stack_params_for_general_services_stack() {
   params_map["CustomerResourcesBucketARN"]="$CustomerResourcesBucketARN"
   params_map["NotificationQueueARN"]="$NotificationQueueARN"
   params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
+  params_map["FCMIntegrationARN"]="$FCMIntegrationARN"
 
   # Prepare parameters for CloudFormation
   param_string=""
