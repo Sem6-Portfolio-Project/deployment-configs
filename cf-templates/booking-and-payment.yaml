@@ -31,6 +31,9 @@ Parameters:
   PayhereMarchantSecret: 
     Type: String
     Description: payhere marchant secret.
+  StripeSecretKey:
+    Type: String,
+    Description: stripe secret key.
   BusesARN:
     Type: String
     Description: ARN of the bus data saved ddb table.
@@ -44,6 +47,9 @@ Outputs:
   OrdersARN:
     Description: ARN of the Orders saved table.
     Value: !GetAtt Orders.Arn
+  QRCodesARN:
+    Description: ARN of the Orders saved table.
+    Value: !GetAtt QRCodes.Arn
   BookingLambdaARN:
     Description: ARN of the BookingLambda.
     Value: !GetAtt BookingLambda.Arn
@@ -70,6 +76,17 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       KeySchema:
         - AttributeName: id
+          KeyType: HASH
+  QRCodes:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: QRCodes
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: email
           KeyType: HASH
   Orders:
     Type: AWS::DynamoDB::Table
@@ -120,6 +137,19 @@ Resources:
                 Resource:
                   - !Ref BusesARN
                   - !GetAtt Orders.Arn
+                  - !GetAtt QRCodes.Arn
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !GetAtt SeatUnlockerQueue.Arn
   BookingLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -143,6 +173,7 @@ Resources:
           PAYHERE_NOTIFY_URL: !Ref PayhereNotifyUrl
           PAYHERE_MARCHANT_ID: !Ref PayhereMarchantID
           PAYHERE_MARCHANT_SECRET: !Ref PayhereMarchantSecret
+          STRIPE_SECRET_KEY: !Ref StripeSecretKey
   PaymentHandleLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -182,6 +213,8 @@ Resources:
                   - !Ref BusesARN
                   - !GetAtt Payments.Arn
                   - !Ref PlatformEndpointsARN
+                  - !GetAtt Orders.Arn
+                  - !GetAtt QRCodes.Arn
         - PolicyName: SQSAccess
           PolicyDocument:
             Version: 2012-10-17

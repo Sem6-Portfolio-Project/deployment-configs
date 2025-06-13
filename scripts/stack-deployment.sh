@@ -214,6 +214,7 @@ stack_params_for_booking_and_payment_services_stack() {
   params_map["PayhereNotifyUrl"]="$PayhereNotifyUrl"
   params_map["PayhereMarchantID"]="$PayhereMarchantID"
   params_map["PayhereMarchantSecret"]="$PayhereMarchantSecret"
+  params_map["StripeSecretKey"]="$StripeSecretKey"
   params_map["BusesARN"]="$BusesARN"
 
   # Prepare parameters for CloudFormation

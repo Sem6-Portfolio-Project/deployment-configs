@@ -33,15 +33,15 @@ upload_and_validate_payment_booking_cf_template() {
 
 update_booking_lambda() {
   build_and_upload_payment_booking_backend_code
-  update_lambda_code "BookingLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BOOKING_PAYMENT_BACKEND.zip"
+  update_lambda_code "BookingLambda" "$S3_DIR_LAMBDA_CODE_FOR_BOOKING_PAYMENT/$ZIP_FILE_NAME_BOOKING_PAYMENT_BACKEND.zip"
 }
 
 update_PaymentHandleInvoker_lambda() {
   build_and_upload_payment_booking_backend_code
-  update_lambda_code "PaymentHandleInvokerLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BOOKING_PAYMENT_BACKEND.zip"
+  update_lambda_code "PaymentHandleInvokerLambda" "$S3_DIR_LAMBDA_CODE_FOR_BOOKING_PAYMENT/$ZIP_FILE_NAME_BOOKING_PAYMENT_BACKEND.zip"
 }
 
 update_SeatsUnlockInvoker_lambda() {
   build_and_upload_payment_booking_backend_code
-  update_lambda_code "SeatsUnlockInvokerLambda" "$S3_DIR_LAMBDA_CODE_FOR_BUS/$ZIP_FILE_NAME_BOOKING_PAYMENT_BACKEND.zip"
+  update_lambda_code "SeatsUnlockInvokerLambda" "$S3_DIR_LAMBDA_CODE_FOR_BOOKING_PAYMENT/$ZIP_FILE_NAME_BOOKING_PAYMENT_BACKEND.zip"
 }
