@@ -18,6 +18,9 @@ Parameters:
   NotificationQueueUrl:
     Type: String
     Description: notification queue url.
+  RestApiID: 
+    Type: String
+    Description: rest api id.    
 Outputs:
   UserPoolId:
     Description: User pool ID
@@ -28,6 +31,9 @@ Outputs:
   AuthLambdaARN:
     Description: ARN of AuthLambda.
     Value: !GetAtt AuthLambda.Arn
+  CognitoAuthorizerID: 
+    Description: ID of CognitoAuthorizer.
+    Value: !Ref CognitoAuthorizer
 Resources:
   UserPool:
     Type: AWS::Cognito::UserPool
@@ -199,3 +205,12 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref AuthLambda
       Principal: apigateway.amazonaws.com
+  CognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: CognitoAuthorizer
+      RestApiId: !Ref RestApiID
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      ProviderARNs: 
+        - !GetAtt UserPool.Arn

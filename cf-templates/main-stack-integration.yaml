@@ -49,6 +49,9 @@ Parameters:
   Stage:
     Type: String
     Description: This is deployment stage
+  CognitoAuthorizerID:
+    Type: String
+    Description: This is the cognito authorizer id.  
 Resources:
   RoleToExecuteLambdas:
     Type: AWS::IAM::Role
@@ -118,7 +121,8 @@ Resources:
       ResourceId: !Ref BusProxyID
       RestApiId: !Ref RestApiID
       HttpMethod: ANY
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizerID
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
@@ -145,7 +149,8 @@ Resources:
       ResourceId: !Ref GeneralProxyID
       RestApiId: !Ref RestApiID
       HttpMethod: ANY
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizerID
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
@@ -172,7 +177,8 @@ Resources:
       ResourceId: !Ref BookingProxyID
       RestApiId: !Ref RestApiID
       HttpMethod: ANY
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizerID
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST

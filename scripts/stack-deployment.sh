@@ -100,6 +100,7 @@ stack_params_for_user_management() {
   params_map["AppConsoleUrl"]="$ConsoleUrl"
   params_map["NotificationQueueARN"]="$NotificationQueueARN"
   params_map["NotificationQueueUrl"]="$NotificationQueueUrl"
+  params_map["RestApiID"]="$RestApiID"
   
 
   # Prepare parameters for CloudFormation
@@ -153,6 +154,7 @@ stack_params_for_main_stack_integration() {
   params_map["RestApiID"]="$RestApiID"
   params_map["WebsocketId"]="$WebsocketId"
   params_map["Stage"]="$Stage"
+  params_map["CognitoAuthorizerID"]="$CognitoAuthorizerID"
 
   # Prepare parameters for CloudFormation
   param_string=""
