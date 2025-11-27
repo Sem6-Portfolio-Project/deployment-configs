@@ -1,0 +1,303 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will integrate the lambda with api gateway
+Parameters:
+  AuthLambdaARN:
+    Type: String
+    Description: This is ARN of the AuthLambda
+  BusLambdaARN:
+    Type: String
+    Description: This is ARN of the BusLambda
+  WSConnectLambdaARN:
+    Type: String
+    Description: This is ARN of the WSConnectLambda
+  WSDisconnectLambdaARN:
+    Type: String
+    Description: This is ARN of the WSDisconnectLambda
+  WSSendLocationLambdaARN:
+    Type: String
+    Description: This is ARN of the WSSendLocationLambda
+  GeneralServiceLambdaARN:
+    Type: String
+    Description: This is ARN of the GeneralServiceLambda   
+  BookingLambdaARN:
+    Type: String
+    Description: This is ARN of the BookingLambda
+  PaymentHandleInvokerLambdaARN:
+    Type: String
+    Description: This is ARN of the PaymentHandleInvokerLambda
+  AuthProxyID:
+    Type: String
+    Description: This is a resource id of AuthProxy
+  BusProxyID:
+    Type: String
+    Description: This is a resource id of AuthProxy
+  GeneralProxyID:
+    Type: String
+    Description: This is a resource id of GeneralProxy
+  BookingProxyID:
+    Type: String
+    Description: This is a resource id of BookingProxy
+  PayhereNotifyPostID:
+    Type: String
+    Description: This is a resource id of PayhereNotifyPost   
+  RestApiID:
+    Type: String
+    Description: This is rest api id
+  WebsocketId:
+    Type: String
+    Description: This is websocket id
+  Stage:
+    Type: String
+    Description: This is deployment stage
+  CognitoAuthorizerID:
+    Type: String
+    Description: This is the cognito authorizer id.  
+Resources:
+  RoleToExecuteLambdas:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: RoleToExecuteLambdas
+      Description: This role give permissions for API Gateway to execute the lambdas.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: LambdaAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: LambdaAccess
+                Effect: Allow
+                Action:
+                  - lambda:InvokeAsync
+                  - lambda:InvokeFunction
+                Resource:
+                  - !Ref AuthLambdaARN
+                  - !Ref BusLambdaARN
+                  - !Ref WSConnectLambdaARN
+                  - !Ref WSDisconnectLambdaARN
+                  - !Ref WSSendLocationLambdaARN
+                  - !Ref GeneralServiceLambdaARN
+                  - !Ref BookingLambdaARN
+                  - !Ref PaymentHandleInvokerLambdaARN
+  AuthProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref AuthProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AuthLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  AuthProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref AuthProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  BusProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref BusProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizerID
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BusLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  BusProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref BusProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  GeneralProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref GeneralProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizerID
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GeneralServiceLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  GeneralProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref GeneralProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  BookingProxyAnyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref BookingProxyID
+      RestApiId: !Ref RestApiID
+      HttpMethod: ANY
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref CognitoAuthorizerID
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BookingLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  BookingProxyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref BookingProxyID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  PayhereNotifyPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref PayhereNotifyPostID
+      RestApiId: !Ref RestApiID
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PaymentHandleInvokerLambdaARN}/invocations
+        Credentials: !GetAtt RoleToExecuteLambdas.Arn
+      MethodResponses:
+        - StatusCode: 200
+  PayhereNotifyOption:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref PayhereNotifyPostID
+      RestApiId: !Ref RestApiID
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  WSConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebsocketId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSConnectLambdaARN}/invocations
+      CredentialsArn: !GetAtt RoleToExecuteLambdas.Arn
+  WSDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebsocketId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSDisconnectLambdaARN}/invocations
+      CredentialsArn: !GetAtt RoleToExecuteLambdas.Arn
+  WSSendLocationIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebsocketId
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WSSendLocationLambdaARN}/invocations
+      CredentialsArn: !GetAtt RoleToExecuteLambdas.Arn
+  WSConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebsocketId
+      AuthorizationType: NONE
+      RouteKey: $connect
+      Target: !Sub integrations/${WSConnectIntegration}
+  WSDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebsocketId
+      AuthorizationType: NONE
+      RouteKey: $disconnect
+      Target: !Sub integrations/${WSDisconnectIntegration}
+  WSSendLocationRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebsocketId
+      AuthorizationType: NONE
+      RouteKey: sendlocation
+      Target: !Sub integrations/${WSSendLocationIntegration}
+  RestApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref RestApiID
+    DependsOn:
+        - AuthProxyAnyMethod
+        - AuthProxyOption
+        - BusProxyAnyMethod
+        - BusProxyOption
+        - GeneralProxyAnyMethod
+        - GeneralProxyOption
+        - BookingProxyAnyMethod
+        - BookingProxyOption
+  RestApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApiID
+      StageName: !Sub rest-${Stage}
+      DeploymentId: !Ref RestApiDeployment
+  WebSocketDeployment:
+      Type: AWS::ApiGatewayV2::Deployment
+      Properties:
+        ApiId: !Ref WebsocketId
+      DependsOn:
+        - WSConnectRoute
+        - WSDisconnectRoute
+        - WSSendLocationRoute
+  WebSocketStage:
+      Type: AWS::ApiGatewayV2::Stage
+      Properties:
+        ApiId: !Ref WebsocketId
+        StageName: !Sub wb-${Stage}
+        DeploymentId: !Ref WebSocketDeployment

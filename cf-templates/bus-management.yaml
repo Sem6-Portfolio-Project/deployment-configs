@@ -1,0 +1,387 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create the dynamodb tables,lambda functions for the bus services.
+Parameters:
+  ResourceBucket:
+    Type: String
+    Description: This is the resource bucket name
+  LambdaCodeKey:
+    Type: String
+    Description: S3 key of the Lambda deployment package
+  NodeLayerARN:
+    Type: String
+    Description: ARN of the node module layer
+  AppConsoleUrl:
+    Type: String
+    Description: Console url.
+  WSEndpointUrl:
+    Type: String
+    Description: Websocket end point url.
+  WebsocketId:
+    Type: String
+    Description: Uniqe Identifier of the websocket api
+  NotificationQueueARN:
+    Type: String
+    Description: ARN of notification queue.
+  NotificationQueueUrl:
+    Type: String
+    Description: notification queue url.
+Outputs:
+  VehicleStateLogsARN:
+    Description: ARN of vehicle state logs table.
+    Value: !GetAtt VehicleStateLogs.Arn
+  BusesARN:
+    Description: ARN of registered buses table.
+    Value: !GetAtt Buses.Arn
+  WebSocketConnBusesARN:
+    Description: ARN of bus's websocket connection table.
+    Value: !GetAtt WebSocketConnBuses.Arn
+  WebSocketConnPassengersARN:
+    Description: ARN of passengers's websocket connection table.
+    Value: !GetAtt WebSocketConnPassengers.Arn
+  WebSocketConnMapperARN:
+    Description: Connection mapper (means busConnection/passengerConnection).
+    Value: !GetAtt WebSocketConnMapper.Arn
+  BusLambdaARN:
+    Description: ARN of BusLambda
+    Value: !GetAtt BusLambda.Arn
+  WSConnectLambdaARN:
+    Description: ARN of WSConnectLambdae.
+    Value: !GetAtt WSConnectLambda.Arn
+  WSDisconnectLambdaARN:
+    Description: ARN of WSDisconnectLambda.
+    Value: !GetAtt WSDisconnectLambda.Arn
+  WSSendLocationLambdaARN:
+    Description: ARN of WSSendLocationLambda.
+    Value: !GetAtt WSSendLocationLambda.Arn
+Resources:
+  Buses:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Buses
+      AttributeDefinitions:
+        - AttributeName: bus_no
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: bus_no
+          KeyType: HASH
+  VehicleStateLogs:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VehicleStateLogs
+      AttributeDefinitions:
+        - AttributeName: bus_no
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: bus_no
+          KeyType: HASH
+  WebSocketConnMapper:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnMapper
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: connection_id
+          KeyType: HASH
+  WebSocketConnBuses:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnBuses
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: connection_id
+          KeyType: HASH
+  WebSocketConnPassengers:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: WebSocketConnPassengers
+      AttributeDefinitions:
+        - AttributeName: bus_no
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: bus_no
+          KeyType: HASH
+  BusLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BusLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on dynamodb.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt Buses.Arn
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !Ref NotificationQueueARN
+  BusLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BusLambda
+      Description: This lambda will invoke defined in lib/lambda/api/bus.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/api/bus.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt BusLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
+          NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
+  WSConnectLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ConnectLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on DDB.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt Buses.Arn
+                  - !GetAtt WebSocketConnBuses.Arn
+                  - !GetAtt WebSocketConnPassengers.Arn
+                  - !GetAtt VehicleStateLogs.Arn
+                  - !GetAtt WebSocketConnMapper.Arn
+  WSConnectLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: WSConnectLambda
+      Description: This lambda will invoke defined in lib/lambda/websocekt/connect.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/websocket/connect.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt WSConnectLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+  WSDisconnectLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DisconnectLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on DDB.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt Buses.Arn
+                  - !GetAtt WebSocketConnBuses.Arn
+                  - !GetAtt WebSocketConnPassengers.Arn
+                  - !GetAtt VehicleStateLogs.Arn
+                  - !GetAtt WebSocketConnMapper.Arn
+  WSDisconnectLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: WSDisconnectLambda
+      Description: This lambda will invoke defined in lib/lambda/websocekt/disconnect.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/websocket/disconnect.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt WSDisconnectLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+  WSSendLocationLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SendLocationLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on DDB.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !GetAtt Buses.Arn
+                  - !GetAtt WebSocketConnBuses.Arn
+                  - !GetAtt WebSocketConnPassengers.Arn
+                  - !GetAtt VehicleStateLogs.Arn
+        - PolicyName: APIGatewayAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: APIGAccess
+                Effect: Allow
+                Action:
+                  - execute-api:ManageConnections
+                  - execute-api:Invoke
+                Resource:
+                  - !Sub
+                      - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WSId}/*/POST/@connections/*
+                      - WSId: !Ref WebsocketId
+  WSSendLocationLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: WSSendLocationLambda
+      Description: This lambda will invoke defined in lib/lambda/websocekt/send-location.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/websocket/send-location.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt WSSendLocationLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          WS_ENDPOINT_URL: !Ref WSEndpointUrl
+  BusLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BusLambda
+      Principal: apigateway.amazonaws.com
+  WSConnectLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WSConnectLambda
+      Principal: apigateway.amazonaws.com
+  WSDisconnectLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WSDisconnectLambda
+      Principal: apigateway.amazonaws.com
+  WSSendLocationLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WSSendLocationLambda
+      Principal: apigateway.amazonaws.com

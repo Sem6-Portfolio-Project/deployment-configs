@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create the common resources lambda node layer.
+Parameters:
+  ResourceBucket:
+    Type: String
+  NodeLayerCodeKey:
+    Type: String
+    Description: S3 key for the lambda node layer.
+Outputs:
+  NodeLayerARN:
+    Description: ARN of the node layer.
+    Value: !Ref NodeLayer
+  NotificationQueueUrl:
+    Description: Notification queue url.
+    Value: !Ref NotificationQueue
+  NotificationQueueARN:
+    Description: ARN of Notification queue.
+    Value: !GetAtt NotificationQueue.Arn
+Resources:
+  NodeLayer:
+    Type: AWS::Lambda::LayerVersion
+    Description: This is for the node module layer
+    Properties:
+      LayerName: NodeModuleLayer
+      Content:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref NodeLayerCodeKey
+  NotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: NotificationQueue
+      VisibilityTimeout: 65
+      MessageRetentionPeriod: 86400

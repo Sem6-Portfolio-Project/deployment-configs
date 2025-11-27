@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template will create cognito User pool, User groups, Related lambda function and IAM roles.
+Parameters:
+  ResourceBucket:
+    Type: String
+  LambdaCodeKey:
+    Type: String
+    Description: S3 key of the Lambda deployment package
+  NodeLayerARN:
+    Type: String
+    Description: ARN of the node module layer
+  AppConsoleUrl:
+    Type: String
+    Description: Console url
+  NotificationQueueARN:
+    Type: String
+    Description: ARN of notification queue.
+  NotificationQueueUrl:
+    Type: String
+    Description: notification queue url.
+  RestApiID: 
+    Type: String
+    Description: rest api id.    
+Outputs:
+  UserPoolId:
+    Description: User pool ID
+    Value: !Ref UserPool
+  UserPoolClientID:
+    Description: User pool client ID
+    Value: !Ref UserPoolClient
+  AuthLambdaARN:
+    Description: ARN of AuthLambda.
+    Value: !GetAtt AuthLambda.Arn
+  CognitoAuthorizerID: 
+    Description: ID of CognitoAuthorizer.
+    Value: !Ref CognitoAuthorizer
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      MfaConfiguration: 'OFF'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          PasswordHistorySize: 5
+          RequireLowercase: 'true'
+          RequireNumbers: 'true'
+          RequireSymbols: 'true'
+          RequireUppercase: 'true'
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: 'false'
+          Mutable: 'true'
+          Name: email
+          Required: 'true'
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: 'false'
+          Mutable: 'true'
+          Name: role
+          Required: 'false'
+      UserPoolAddOns:
+        AdvancedSecurityMode: 'OFF'
+      UserPoolName: MobileApp
+      AutoVerifiedAttributes:
+        - email
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: UserPoolClient
+      AccessTokenValidity: 24
+      AuthSessionValidity: 5
+      IdTokenValidity: 24
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: 'hours'
+        IdToken: 'hours'
+        RefreshToken: 'days'
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_CUSTOM_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: 'false'
+      PreventUserExistenceErrors: LEGACY
+      ReadAttributes:
+        - email
+        - 'custom:role'
+      SupportedIdentityProviders:
+        - COGNITO
+#        - Facebook
+#        - Google
+      WriteAttributes:
+        - email
+        - 'custom:role'
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: This group for handling the admin users
+      GroupName: AdminGroup
+      Precedence: 1
+      UserPoolId: !Ref UserPool
+  BusGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: This group for handling the Bus owners
+      GroupName: BusGroup
+      Precedence: 2
+      UserPoolId: !Ref UserPool
+  PassengerGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: This group for handling the passengers
+      GroupName: PassengerGroup
+      Precedence: 3
+      UserPoolId: !Ref UserPool
+  DisabledGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      Description: This group for handling the disabled users
+      GroupName: DisabledGroup
+      Precedence: 4
+      UserPoolId: !Ref UserPool
+  AuthLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AuthLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on cognito.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CognitoAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: CognitoAccess
+                Effect: Allow
+                Action:
+                  - cognito-idp:SignUp
+                  - cognito-idp:ConfirmSignUp
+                  - cognito-idp:ResendConfirmationCode
+                  - cognito-idp:InitiateAuth
+                  - cognito-idp:RespondToAuthChallenge
+                  - cognito-idp:ForgotPassword
+                  - cognito-idp:ConfirmForgotPassword
+                  - cognito-idp:ChangePassword
+                  - cognito-idp:AdminAddUserToGroup
+                  - cognito-idp:AdminGetUser
+                Resource:
+                  - !Sub
+                      - arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${PoolId}
+                      - PoolId: !Ref UserPool
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !Ref NotificationQueueARN
+  AuthLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: AuthLambda
+      Description: This lambda will invoke defined in lib/lambda/api/auth.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/api/auth.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt AuthLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          COGNITO_USER_POOL_ID: !Ref UserPool
+          COGNITO_APP_CLIENT_ID: !Ref UserPoolClient
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
+          NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
+  AuthLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AuthLambda
+      Principal: apigateway.amazonaws.com
+  CognitoAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: CognitoAuthorizer
+      RestApiId: !Ref RestApiID
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      ProviderARNs: 
+        - !GetAtt UserPool.Arn

@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This will create Websocket API + Rest APIs
+Parameters:
+  Stage:
+    Type: String
+    Description: This is the deployed stage
+Outputs:
+  WSEndpointUrl:
+    Value: !Sub https://${Websocket}.execute-api.${AWS::Region}.amazonaws.com/wb-${Stage}/
+    Description: This this websocket end point url ( this is used to send message to the ws by the server )
+  WebsocketId:
+    Value: !Ref Websocket
+    Description: This is websocket id
+  AuthProxyID:
+    Value: !Ref AuthProxy
+    Description: This is a resource id of AuthProxy
+  BusProxyID:
+    Value: !Ref BusProxy
+    Description: This is a resource id of AuthProxy
+  GeneralProxyID:
+    Value: !Ref GeneralProxy
+    Description: This is a resource id of GeneralProxy
+  BookingProxyID:
+    Value: !Ref BookingProxy
+    Description: This is a resource id of BookingProxy 
+  PayhereNotifyPostID:
+    Value: !Ref PayhereNotifyPost
+    Description: This is a resource id of PayhereNotifyPost        
+  RestApiID:
+    Value: !Ref BusTrackingSys
+    Description: This is rest api id
+Resources:
+  Websocket:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: Websocket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.action
+  BusTrackingSys:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: BusTrackingSys
+      Description: This is handle the all api end ponts which needed for busTracking system.
+      EndpointConfiguration:
+        Types:
+          - EDGE
+  Auth:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'auth'
+  Bus:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'bus'
+  General:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'general'
+  Booking:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'booking'
+  Payment:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !GetAtt BusTrackingSys.RootResourceId
+      PathPart: 'payment'
+  AuthProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref Auth
+      PathPart: '{proxy+}'
+  BusProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref Bus
+      PathPart: '{proxy+}'
+  GeneralProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref General
+      PathPart: '{proxy+}'
+  BookingProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref Booking
+      PathPart: '{proxy+}'
+  PayhereNotifyPost:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BusTrackingSys
+      ParentId: !Ref Payment
+      PathPart: 'payhere-notify'

@@ -1,0 +1,331 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template will create iam roles, lambdas, and queue for the bookings and payment handling.
+Parameters:
+  ResourceBucket:
+    Type: String
+  LambdaCodeKey:
+    Type: String
+    Description: S3 key of the Lambda deployment package
+  NodeLayerARN:
+    Type: String
+    Description: ARN of the node module layer
+  AppConsoleUrl:
+    Type: String
+    Description: Console url
+  PlatformEndpointsARN:
+    Type: String
+    Description: ARN of the application enpoints saved table.
+  NotificationQueueARN:
+    Type: String
+    Description: ARN of notification queue.
+  NotificationQueueUrl:
+    Type: String
+    Description: notification queue url.
+  PayhereNotifyUrl: 
+    Type: String
+    Description: payhere server to server callback endpoint url.
+  PayhereMarchantID: 
+    Type: String
+    Description: payhere marchant id.
+  PayhereMarchantSecret: 
+    Type: String
+    Description: payhere marchant secret.
+  StripeSecretKey:
+    Type: String,
+    Description: stripe secret key.
+  BusesARN:
+    Type: String
+    Description: ARN of the bus data saved ddb table.
+Outputs:
+  SeatUnlockerQueueARN:
+    Description: ARN of the seats unlock requset queue.
+    Value: !GetAtt SeatUnlockerQueue.Arn
+  PaymentsARN:
+    Description: ARN of the payments saved table.
+    Value: !GetAtt Payments.Arn
+  OrdersARN:
+    Description: ARN of the Orders saved table.
+    Value: !GetAtt Orders.Arn
+  QRCodesARN:
+    Description: ARN of the Orders saved table.
+    Value: !GetAtt QRCodes.Arn
+  BookingLambdaARN:
+    Description: ARN of the BookingLambda.
+    Value: !GetAtt BookingLambda.Arn
+  PaymentHandleInvokerLambdaARN:
+    Description: ARN of the PaymentHandleInvokerLambda.
+    Value: !GetAtt PaymentHandleInvokerLambda.Arn
+  SeatsUnlockInvokerLambdaARN:
+    Description: ARN of the SeatsUnlockInvokerLambda.
+    Value: !GetAtt SeatsUnlockInvokerLambda.Arn
+Resources:
+  SeatUnlockerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: SeatUnlockerQueue
+      VisibilityTimeout: 65
+      MessageRetentionPeriod: 86400
+  Payments:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Payments
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+  QRCodes:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: QRCodes
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+  Orders:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Orders
+      AttributeDefinitions:
+        - AttributeName: order_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: order_id
+          KeyType: HASH   
+  BookingLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BookingLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on dynamodb.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Ref BusesARN
+                  - !GetAtt Orders.Arn
+                  - !GetAtt QRCodes.Arn
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !GetAtt SeatUnlockerQueue.Arn
+  BookingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BookingLambda
+      Description: This lambda will invoke defined in lib/lambda/api/seat-booking.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/lambda/api/seat-booking.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt BookingLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
+          SEAT_UNLOCKER_QUEUE: !Ref SeatUnlockerQueue
+          PAYHERE_NOTIFY_URL: !Ref PayhereNotifyUrl
+          PAYHERE_MARCHANT_ID: !Ref PayhereMarchantID
+          PAYHERE_MARCHANT_SECRET: !Ref PayhereMarchantSecret
+          STRIPE_SECRET_KEY: !Ref StripeSecretKey
+  PaymentHandleLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: PaymentHandleLambdaExecutionRole
+      Description: This role give permissions for lambda to execute certain action on dynamodb,SQS,.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Ref BusesARN
+                  - !GetAtt Payments.Arn
+                  - !Ref PlatformEndpointsARN
+                  - !GetAtt Orders.Arn
+                  - !GetAtt QRCodes.Arn
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SQSAccess
+                Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:DeleteMessage
+                  - sqs:PurgeQueue
+                Resource:
+                  - !Ref NotificationQueueARN
+  PaymentHandleInvokerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: PaymentHandleInvokerLambda
+      Description: This lambda will invoke defined in lib/invokers/payment-handler.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/invokers/payment-handler.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt PaymentHandleLambdaExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
+          NOTIFICATION_QUEUE: !Ref NotificationQueueUrl
+  SeatsUnlockInvokerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SeatsUnlockInvokerExecutionRole
+      Description: This role give permissions for lambda to execute certain action on dynamodb.
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole
+      Policies:
+        - PolicyName: DynamodbAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: DynamodbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:ConditionCheckItem
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetRecords
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Ref BusesARN
+  SeatsUnlockInvokerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: SeatsUnlockInvokerLambda
+      Description: This lambda will invoke defined in lib/invokers/seats-unlocker.js.
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaCodeKey
+      MemorySize: 1024
+      Handler: lib/invokers/seats-unlocker.handler
+      Timeout: 60
+      Runtime: nodejs22.x
+      Role: !GetAtt SeatsUnlockInvokerExecutionRole.Arn
+      Layers:
+        - !Ref NodeLayerARN
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          APP_CONSOLE_URL: !Ref AppConsoleUrl
+  LambdaSQSSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: True
+      EventSourceArn: !GetAtt SeatUnlockerQueue.Arn
+      FunctionName: !Ref SeatsUnlockInvokerLambda
+  BookingLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BookingLambda
+      Principal: apigateway.amazonaws.com
+  PaymentHandleInvokerLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PaymentHandleInvokerLambda
+      Principal: apigateway.amazonaws.com
+  SeatsUnlockInvokerLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SeatsUnlockInvokerLambda
+      Principal: sqs.amazonaws.com
+
